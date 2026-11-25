@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "graphify": {
+      "command": "uvx",
+      "args": ["graphify-mcp"],
+      "disabled": false
+    },
+    "ui-registry": {
+      "command": "npx",
+      "args": ["-y", "ui-registry-mcp"],
+      "disabled": true
+    },
+    "headroom": {
+      "command": "uvx",
+      "args": ["headroom-mcp"],
+      "disabled": false
+    }
+  }
+}

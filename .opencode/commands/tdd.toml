@@ -1,0 +1,7 @@
+description = "Enforce red-green-refactor Test-Driven Development cycle"
+prompt = """
+Follow .agents/skills/superpowers/test-driven-development/SKILL.md:
+1. Write a failing test first (Red).
+2. Implement minimal code to pass (Green).
+3. Simplify without breaking tests (Refactor).
+"""

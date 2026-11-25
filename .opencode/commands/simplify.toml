@@ -1,0 +1,8 @@
+description = "Run Karpathy-compliant surgical simplification"
+prompt = """
+Follow the code simplification standards in .agents/rules/code-quality.md:
+1. Invoke .agents/skills/quality/code-simplification/SKILL.md.
+2. Eliminate unused abstractions, redundant logic, or over-engineering introduced during the session.
+3. Clean up only your own orphans — do not refactor unrelated working code.
+4. Run regression tests before and after simplification to verify zero behavioral changes.
+"""

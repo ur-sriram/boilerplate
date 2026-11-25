@@ -1,0 +1,4 @@
+description = "Remove dead code and enforce <= 400 line modularity"
+prompt = """
+Audit target modules for dead code, unused exports, and files exceeding 400 lines. Refactor cleanly into feature folders.
+"""

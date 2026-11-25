@@ -1,0 +1,7 @@
+description = "Plan an architectural feature or decompose tasks"
+prompt = """
+Follow the planning standards in .agents/rules/planning-standards.md:
+1. For architectural features, initiate or update the specification in .specify/ adhering to the project constitution.
+2. For implementation tasks, invoke the Superpowers plan writing workflow (.agents/skills/superpowers/writing-plans/SKILL.md) to generate atomic, verifiable steps.
+3. Define explicit verification commands for each step before writing code.
+"""

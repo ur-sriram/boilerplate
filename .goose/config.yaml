@@ -1,0 +1,13 @@
+# Goose CLI Configuration (Project-Scoped)
+version: 1.0.0
+instructions: AGENTS.md
+extensions:
+  graphify:
+    name: graphify
+    cmd: uvx
+    args:
+      - "--from"
+      - "graphifyy"
+      - "graphify-mcp"
+    enabled: true
+    type: stdio

@@ -1,0 +1,8 @@
+description = "Execute test-driven development workflow"
+prompt = """
+Follow the testing standards in .agents/rules/code-quality.md:
+1. Invoke .agents/skills/superpowers/test-driven-development/SKILL.md.
+2. Write a minimal failing test that reproduces the bug or asserts the required behavior.
+3. Verify test failure before touching implementation code.
+4. Implement minimal code to pass the test, then re-verify.
+"""

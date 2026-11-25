@@ -1,0 +1,10 @@
+# Moonshot Kimi Code CLI Configuration
+# Standardized project configuration
+
+[project]
+name = "boilerplate"
+rules_file = "AGENTS.md"
+respect_gitignore = true
+
+[skills]
+directory = ".agents/skills"

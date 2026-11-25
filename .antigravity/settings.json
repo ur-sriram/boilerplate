@@ -1,0 +1,19 @@
+{
+    "rules":  {
+                  "core":  "AGENTS.md",
+                  "directory":  ".agents/rules",
+                  "discovery":  "glob"
+              },
+    "skills":  {
+                   "directory":  ".agents/skills"
+               },
+    "context":  {
+                    "max_core_tokens":  1000,
+                    "progressive_disclosure":  true,
+                    "mcp_profile":  "core"
+                },
+    "security":  {
+                     "strict_project_scoping":  true,
+                     "allowed_root":  "."
+                 }
+}

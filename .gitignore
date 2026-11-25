@@ -1,0 +1,77 @@
+# ==============================================================================
+# GIT IGNORE - Source control boundaries
+# Strictly mirrors 100% of patterns defined in .aiignore
+# ==============================================================================
+
+# Dependencies & Package Managers
+node_modules/
+vendor/
+dist/
+build/
+out/
+target/
+
+# Virtual Environments & Runtimes
+.venv/
+venv/
+env/
+ENV/
+
+# Python Caches & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Cache & Temporary Directories
+.cache/
+.parcel-cache/
+.turbo/
+.next/
+.nuxt/
+temp/
+tmp/
+*.tmp
+*.log
+
+# Test Fixtures & Sandboxes
+boilerplate_smoke_*
+sandbox/
+.sandbox/
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.cert
+
+# Binary, Media & Large Fixtures
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.exe
+*.dll
+*.so
+*.dylib
+*.iso
+*.bin
+
+# OS Artifacts
+.DS_Store
+Thumbs.db
+
+# Secondary Agent Mirrored Skills (Fallback when junctions not used)
+.claude/skills/
+.cline/skills/
+.codex/skills/
+.cursor/skills/
+.qoder/skills/
+.windsurf/skills/

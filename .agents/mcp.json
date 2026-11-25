@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/mcp-settings.json",
+  "mcpServers": {
+    "graphify": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "graphifyy",
+        "graphify-mcp"
+      ],
+      "profile": "core",
+      "enabled": true
+    },
+    "ui-registry": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "ui-registry-mcp@0.7.1"
+      ],
+      "profile": "ui",
+      "enabled": false
+    },
+    "headroom": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "headroom-ai[mcp]",
+        "headroom",
+        "mcp",
+        "serve"
+      ],
+      "profile": "compression",
+      "enabled": false
+    }
+  }
+}

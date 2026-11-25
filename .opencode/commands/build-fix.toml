@@ -1,0 +1,4 @@
+description = "Diagnose and surgically fix build or type errors"
+prompt = """
+Run typecheck/build, inspect exact compiler diagnostics, and apply minimal surgical fixes without refactoring unrelated code.
+"""

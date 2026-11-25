@@ -1,0 +1,7 @@
+description = "Execute multi-stage code review prior to integration"
+prompt = """
+Follow the code quality review standards in .agents/rules/code-quality.md:
+1. Stage 1 (Correctness & Security): Validate logic, edge cases, error handling, and security boundaries.
+2. Stage 2 (Simplicity & Karpathy Guidelines): Ensure changes are surgical, minimal, and free of speculative abstractions.
+3. Review protocol: Invoke .agents/skills/superpowers/requesting-code-review/SKILL.md.
+"""

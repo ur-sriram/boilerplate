@@ -1,0 +1,6 @@
+---
+description: Universal Multi-Agent Core Rules
+globs: *
+---
+
+See AGENTS.md and .agents/rules/ for all non-negotiable guidelines and UI/UX pipeline.

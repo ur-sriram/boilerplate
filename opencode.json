@@ -1,0 +1,49 @@
+{
+    "$schema":  "https://opencode.ai/config.json",
+    "instructions":  [
+                         "AGENTS.md"
+                     ],
+    "mcp":  {
+                "graphify":  {
+                                 "type":  "local",
+                                 "command":  "uvx",
+                                 "args":  [
+                                              "--from",
+                                              "graphifyy",
+                                              "graphify-mcp"
+                                          ],
+                                 "enabled":  true
+                             },
+                "ui-registry":  {
+                                    "type":  "local",
+                                    "command":  "npx",
+                                    "args":  [
+                                                 "-y",
+                                                 "ui-registry-mcp@0.7.1"
+                                             ],
+                                    "enabled":  false
+                                },
+                "headroom":  {
+                                 "type":  "local",
+                                 "command":  "uvx",
+                                 "args":  [
+                                              "--from",
+                                              "headroom-ai[mcp]",
+                                              "headroom",
+                                              "mcp",
+                                              "serve"
+                                          ],
+                                 "enabled":  false
+                             }
+            },
+    "plugins":  {
+                    "config-protection":  {
+                                              "path":  ".opencode/plugins/config-protection.js",
+                                              "enabled":  true
+                                          },
+                    "rtk-interceptor":  {
+                                            "path":  ".opencode/plugins/rtk-interceptor.js",
+                                            "enabled":  true
+                                        }
+                }
+}

@@ -1,0 +1,14 @@
+{
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1",
+      "on_failure": "block"
+    },
+    {
+      "event": "SessionStart",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1",
+      "on_failure": "continue"
+    }
+  ]
+}

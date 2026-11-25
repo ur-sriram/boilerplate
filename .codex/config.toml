@@ -1,0 +1,17 @@
+# Codex CLI Project Configuration
+# Scoped strictly to project level; zero global side-effects
+
+rules_file = "AGENTS.md"
+
+[project]
+name = "boilerplate"
+skills_directory = ".codex/skills"
+
+[mcp_servers.graphify]
+command = "uvx"
+args = ["--from", "graphifyy", "graphify-mcp"]
+
+[hooks]
+pre_tool_use = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1"
+post_tool_use = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/rtk-filter.ps1"
+session_start = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1"

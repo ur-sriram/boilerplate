@@ -1,0 +1,6 @@
+# Goose Operational Hints
+# Always inspect project-level invariants and rules first:
+- Read AGENTS.md for core non-negotiable invariants and Karpathy guidelines.
+- Skills reside in .agents/skills/.
+- Use .agents/rules/ for task-specific guidance (planning-standards, code-quality, ui-standards).
+- Never modify files outside this project directory.

@@ -1,0 +1,7 @@
+description = "Run full programmatic verification suite"
+prompt = """
+Execute the full verification suite:
+- Windows: .\\verify-all.cmd
+- POSIX: ./scripts/verify-all.sh
+Report exact pass/fail counts.
+"""

@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "PreToolUse": {
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1",
+      "posix_command": "sh ./scripts/hooks/protect-config.sh",
+      "timeout_ms": 3000,
+      "on_failure": "block"
+    },
+    "PostToolUse": {
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/rtk-filter.ps1",
+      "posix_command": "sh ./scripts/hooks/rtk-filter.sh",
+      "timeout_ms": 5000,
+      "on_failure": "continue"
+    },
+    "SessionStart": {
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1",
+      "posix_command": "sh ./scripts/hooks/session-start.sh",
+      "timeout_ms": 10000,
+      "on_failure": "warn"
+    }
+  }
+}
