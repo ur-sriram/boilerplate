@@ -137,7 +137,9 @@ Then write `feature.test.ts` first. Each feature folder holds `feature.ts`,
    the issue it fixes (`Fixes #123`).
 5. **The checks must be green.** Run `./scripts/verify-all.sh`, `npm test`,
    `npm run lint` and `npm run typecheck` — these are exactly the commands the
-   GitHub Actions workflow runs, on Linux and on Windows.
+   GitHub Actions workflow runs, on Linux and on Windows. That workflow is
+   staged in [`docs/ci/ci.yml`](docs/ci/ci.yml); see
+   [`docs/ci/README.md`](docs/ci/README.md) to activate it.
 6. **Respond to review.** Push follow-up commits rather than force-pushing once
    review has started.
 

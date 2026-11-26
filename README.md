@@ -4,7 +4,6 @@
 
 **A ready-made workspace for AI coding agents — 377 curated skills, project-local guardrails and a 10-suite self-check, pre-wired into 13 agents.** Clone it, run one command, and your agent already knows how your project works.
 
-[![CI](https://github.com/ur-sriram/boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/ur-sriram/boilerplate/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-3fb950.svg)](LICENSE)
 [![Skills](https://img.shields.io/badge/skills-377-58a6ff.svg)](.agents/rules/skills-index.md)
 [![Agents](https://img.shields.io/badge/agents-13-d29922.svg)](docs/agents)
