@@ -1,194 +1,342 @@
-# Production-Ready Multi-Agent Unified Boilerplate
+# Multi-Agent Boilerplate
 
-A battle-tested, project-level starter template for autonomous coding agents. Zero global configuration required — all skills, rules, hooks, plugins, and MCP servers reside strictly within the project boundary.
+**A ready-made workspace for AI coding agents.** Clone it, run one command, and
+your agent gets 377 curated skills, strict project rules, safety guardrails and
+a self-checking test suite — all stored *inside the project*, so nothing leaks
+into your global config.
 
----
-
-## 1. Project Overview & Architecture
-
-Modern AI coding agents (OpenCode, Antigravity, Codex, Qoder, Goose, Kimi, Junie, Freebuff) often require scattered global configuration in `~/.config`, `%APPDATA%`, or `~/.claude`. This boilerplate eliminates manual setup and configuration drift by providing a self-contained, project-scoped architecture:
-
-- **Layer 1: Always-On Core (`AGENTS.md`)**: Comprehensive root index containing project invariants, Karpathy minimal-change guidelines, 4-step UI/UX pipeline, Cloudflare CodeMode MCP rules, and pointers to all rules and agent adapters.
-- **Layer 2: On-Demand Rules (`.agents/rules/*.md`)**: Modular rules loaded conditionally via glob pattern triggers or agent routing for planning, code quality, UI standards, exploration, and automation.
-- **Layer 3: Single Canonical Skill Store (`.agents/skills/`)**: **377 skills** (Superpowers, Impeccable, Anti-Slop, Unslop, Motion, Agency personas, …), every one mapped to a governing rule in [.agents/rules/skills-index.md](.agents/rules/skills-index.md). Agents reach them natively (`.agents/skills/`) or through zero-elevation NTFS junctions (`mklink /J`) / POSIX symlinks — `scripts/sync-agent-adapters.sh` creates and verifies all six.
-- **Dynamic MCP Profiles**: Switch between `core` (default, ~350 tokens), `ui` (~750 tokens), `compression` (~650 tokens), or `all` profiles via `scripts/mcp-profile.sh` / `.ps1`. One Python implementation updates **all nine** adapter MCP configs, so they can never drift apart.
-- **Executable Lifecycle Hooks (`scripts/hooks/`)**: Config protection, `rtk` terminal-output compression and session validation. `scripts/hooks/run-hook.mjs` is a cross-platform Node dispatcher, so the same command string works on Windows, macOS and Linux.
-- **Spec-Driven Development (`.specify/`)**: Vendored GitHub Spec Kit v1.4.3 with **both** script families (PowerShell + POSIX bash), templates, constitution and the "Full SDD Cycle" workflow. See [.specify/README.md](.specify/README.md).
-- **Self-Verification Suite (`scripts/`)**: Nine programmatic suites validating tool availability, script syntax, file-size limits, link integrity, adapter parity, skill-wiring coverage and vendored-file integrity.
+Beginner friendly: if you can copy a command, you can use this.
 
 ---
 
-## 2. Adoption & Import Methods
+## Table of contents
 
-Choose one of two quick-start methods to adopt this boilerplate for a new project:
+1. [What you get](#1-what-you-get)
+2. [Quick start (5 minutes)](#2-quick-start-5-minutes)
+3. [How to use it day to day](#3-how-to-use-it-day-to-day)
+4. [The slash commands](#4-the-slash-commands)
+5. [How the pieces fit together](#5-how-the-pieces-fit-together)
+6. [Your project's folder layout](#6-your-projects-folder-layout)
+7. [Using it with different agents](#7-using-it-with-different-agents)
+8. [Configuring things](#8-configuring-things)
+9. [Making it yours](#9-making-it-yours)
+10. [When something goes wrong](#10-when-something-goes-wrong)
 
-### Method A: Use as GitHub Template (Recommended)
+---
+
+## 1. What you get
+
+| | Feature | Why it helps |
+|---|---|---|
+| 🧠 | **377 skills, each with a "how to use it" rule** | Instead of your agent improvising, it loads a proven workflow (TDD, debugging, code review, UI polish, git safety…). Every skill is listed with its governing rule in [`.agents/rules/skills-index.md`](.agents/rules/skills-index.md). |
+| 📏 | **Project rules that load on demand** | 7 short rule files instead of one giant prompt. Your agent reads only the ones the task needs, so it stays fast. |
+| 🛡️ | **Guardrails that actually run** | A hook blocks any file write outside the project folder, on Windows, macOS and Linux. |
+| 📝 | **Plan before you code** | Spec-driven templates (`.specify/`) plus 8 slash commands like `/plan` and `/tdd` turn "build me X" into a written spec, plan and task list. |
+| 🧩 | **Works with 13 AI agents** | Claude Code, Cursor, Codex, Copilot, OpenCode, Junie, Kimi, Goose, Qoder, Windsurf, Cline, Antigravity, Freebuff — same rules, same skills, same commands in each. 12 of them are checked automatically by `scripts/verify-adapters.py`. |
+| ✅ | **A test suite that checks the repo itself** | 9 checks run in seconds: scripts parse, links resolve, files are under 400 lines, every agent has the same capabilities, the skill map is current. If something drifts, you find out immediately. |
+| 🚧 | **Sensible defaults for quality** | Strict TypeScript, a 400-line file cap, TDD as the default, a 4-step UI pipeline, and a "no secrets, no global writes" constitution. |
+
+**What it deliberately does NOT do:** touch your global config. Nothing is
+written to `~/.claude`, `%APPDATA%`, `~/.config` or anywhere outside the
+project folder. Everything is reversible — delete the folder and it's gone.
+
+---
+
+## 2. Quick start (5 minutes)
+
+### Step 1 — Get the code
+
 ```bash
-# 1. Create a new repository from this template
-gh repo create my-awesome-project --template sriram/boilerplate --clone
-cd my-awesome-project
+# Option A: start a new GitHub repo from it (recommended)
+gh repo create my-project --template sriram/boilerplate --clone
+cd my-project
 
-# 2. Run one-time local initialization (zero global modifications)
-# Windows (Command Prompt):
+# Option B: just clone it
+git clone https://github.com/sriram/boilerplate.git my-project
+cd my-project
+```
+
+### Step 2 — Set it up (creates the skill links your agent needs)
+
+```bash
+# Linux / macOS
+./scripts/bootstrap.sh
+
+# Windows (Command Prompt)
 bootstrap.cmd
 
-# Windows (PowerShell with execution policy bypass):
+# Windows (PowerShell)
 powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/bootstrap.ps1
-
-# Linux / macOS (Bash):
-./scripts/bootstrap.sh
 ```
 
-### Method B: Clone & Initialize Directly
+### Step 3 — Check everything works
+
 ```bash
-# 1. Clone repository
-git clone https://github.com/sriram/boilerplate.git my-awesome-project
-cd my-awesome-project
+# Linux / macOS
+./scripts/verify-all.sh
 
-# 2. Run local bootstrap wrapper
-# Windows:
-bootstrap.cmd
-# POSIX:
-./scripts/bootstrap.sh
+# Windows
+verify-all.cmd
 ```
+
+You should see this:
+
+```
+ 1. verify-tools           [PASS]
+ 2. verify-scripts         [PASS]
+ 3. verify-file-limits     [PASS]
+ 4. verify-links           [PASS]
+ 5. sync-agent-adapters    [PASS]
+ 6. test-bootstrap         [PASS]
+ 7. skills-index           [PASS]
+ 8. verify-adapters        [PASS]
+ 9. specify-integrity      [PASS]
+ ALL VERIFICATION SUITES PASSED (100% GREEN)
+```
+
+### Step 4 — Install the project tools (optional, but recommended)
+
+```bash
+npm install     # installs TypeScript, ESLint and the test runner
+npm test        # runs the example feature's tests
+npm run lint    # checks code style + the 400-line limit
+npm run typecheck
+```
+
+### Step 5 — Open it in your agent
+
+Point your agent at the project folder. It reads `AGENTS.md` automatically, and
+from then on the rules, skills and commands are available.
 
 ---
 
-## 3. Copy-Paste Agent Bootstrap Prompt
+## 3. How to use it day to day
 
-When dispatching any AI coding agent to work in this repository, paste the following prompt into its initial context window:
+### The shortest possible loop
+
+```
+1. Describe what you want     →  "Add a dark mode toggle"
+2. Agent plans it              →  /plan  (writes spec.md, plan.md, tasks.md)
+3. Agent builds it             →  /tdd   (failing test first, then code)
+4. Agent checks itself         →  /verify (runs all 9 suites)
+5. Agent reviews the diff      →  /review
+```
+
+### Paste this into any agent's first message
 
 ```text
-You are an AI coding agent adopting this repository. This project is configured with a zero-config, project-level agentic boilerplate. Follow these initialization instructions strictly:
+You are an AI coding agent working in this repository.
 
-1. READ PROJECT INVARIANTS FIRST:
-   Open and inspect `AGENTS.md` at project root. It contains the non-negotiable architectural rules, the Karpathy minimal-change guidelines, and pointers to domain rules. Stay strictly within its <= 1,000 token budget.
-
-2. RUN ENVIRONMENT VERIFICATION:
-   Execute the verification suite to ensure your runtime environment is clean and all configurations resolve:
-   - Windows Command Prompt: verify-all.cmd
-   - Windows PowerShell: powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/verify-all.ps1
-   - Linux/macOS Bash: ./scripts/verify-all.sh
-   The suite must report ALL 9 SUITES PASSED before you start work.
-
-3. DISCOVER YOUR AGENT CONFIGURATION:
-   Identify your agent runtime and review your specific setup guide in `docs/agents/`:
-   - Claude Code: docs/agents/claude.md (reads CLAUDE.md, .claude/settings.json, .mcp.json)
-   - OpenCode: docs/agents/opencode.md (reads opencode.json & .opencode/plugins/)
-   - Cursor: docs/agents/cursor.md (reads .cursor/rules/core.mdc, .cursor/mcp.json, .cursor/commands/)
-   - Antigravity IDE / CLI: docs/agents/antigravity.md (reads .antigravity/ & .agents/)
-   - Codex CLI: docs/agents/codex.md (reads .codex/config.toml, .codex/prompts/)
-   - Qoder / Qoder CLI: docs/agents/qoder.md (reads .qoder/settings.json)
-   - GitHub Copilot: docs/agents/copilot.md (reads .github/copilot-instructions.md, .github/prompts/)
-   - Freebuff: docs/agents/freebuff.md (set CODEBUFF_TRUST_AGENT_DIRS=1; reads AGENTS.md)
-   - Goose: docs/agents/goose.md (reads .goosehints & .goose/config.yaml)
-   - Kimi Code CLI: docs/agents/kimi.md (reads .kimi/config.toml, .kimi-code/mcp.json)
-   - JetBrains Junie: docs/agents/junie.md (reads .junie/playbook.md & AGENTS.md)
-   - Cline / Roo Code: docs/agents/cline.md (reads .clinerules & AGENTS.md)
-   - Windsurf: docs/agents/windsurf.md (reads .windsurfrules & AGENTS.md)
-
-4. STRICT SCOPING MANDATE:
-   NEVER write, edit, or create files outside this project directory (e.g. in $HOME, %USERPROFILE%, or global config directories). All rules, skills, MCP servers, and hooks are strictly project-scoped.
-
-5. PROGRESSIVE DISCLOSURE & WORKFLOWS:
-   - For architecture & specs: Run `/plan`. It scaffolds `specs/<NNN>-<slug>/` from the `.specify/` templates and fills them in. See .specify/README.md.
-   - For implementation: Use Superpowers TDD (.agents/skills/superpowers/test-driven-development/SKILL.md).
-   - For UI/UX: Follow Impeccable verbs and Anti-Slop gates (.agents/rules/ui-standards.md). Activate the UI MCP profile if needed via: ./scripts/mcp-profile.sh ui
-   - For code review: Execute 2-stage review before completing tasks (.agents/rules/code-quality.md).
-   - For skill discovery: match the task against .agents/rules/skills-index.md, then load the skill at its Canonical Path together with its Governing Rule.
+1. Read `AGENTS.md` at the project root first — it is the short index of every
+   rule and skill you should use.
+2. Run `./scripts/verify-all.sh` (or `verify-all.cmd` on Windows) before you
+   start. All 9 suites must pass.
+3. Before writing code for a new feature, run `/plan`. It creates the spec,
+   plan and task files under `specs/<number>-<name>/`.
+4. For implementation, use `/tdd` — write a failing test first, watch it fail,
+   then make it pass.
+5. Before you finish, run `/verify` and `/review`.
+6. Never write outside this project folder. Never commit secrets.
 ```
+
+### Asking for a feature, the way you'd ask a colleague
+
+| You say | The agent does |
+|---|---|
+| "Add a settings page" | Reads the skills index, finds the relevant skills, plans the feature in `specs/`, then implements it test-first |
+| "This test is failing" | Loads the systematic-debugging skill: reproduce → isolate → hypothesise → minimal fix with a regression test |
+| "Make this component look better" | Follows the 4-step UI pipeline: reuse an existing component → add motion → anti-slop check → polish |
+| "Review my changes" | Two-stage review: correctness & security, then simplicity & the 400-line limit |
+| "Clean this up" | Surgical simplification only — no drive-by refactors, no reformatting |
 
 ---
 
-## 4. Per-Agent Guide Index
+## 4. The slash commands
 
-Detailed setup guides, configuration files, and hook mappings for supported agents:
+Type `/` in your agent's chat. All eight work in every supported adapter.
 
-Every adapter below is covered by `scripts/verify-adapters.py`, which fails the
-build if an agent loses its rules, MCP servers, hooks or slash commands.
-
-| Agent Runtime | Primary Config File | Setup Guide | Hook Support | Skill Access | Slash Commands |
-|---|---|---|---|---|---|
-| **Claude Code** | `.claude/settings.json` + `.mcp.json` | [docs/agents/claude.md](docs/agents/claude.md) | `.claude/settings.json` (all 3 events) | Native + junction `.claude/skills` | `.claude/commands/` |
-| **OpenCode** | `opencode.json` | [docs/agents/opencode.md](docs/agents/opencode.md) | Plugins (`.opencode/plugins/`) | Native (`.agents/skills/`) | `.opencode/commands/` |
-| **Cursor** | `.cursor/rules/core.mdc` + `.cursor/mcp.json` | [docs/agents/cursor.md](docs/agents/cursor.md) | n/a (prompt-level rules) | Native + junction `.cursor/skills` | `.cursor/commands/` |
-| **Antigravity IDE / CLI** | `.antigravity/settings.json` | [docs/agents/antigravity.md](docs/agents/antigravity.md) | `.antigravity/hooks.json` (all 3 + POSIX) | Native (`.agents/skills/`) | `.antigravity/commands/` |
-| **Codex CLI** | `.codex/config.toml` | [docs/agents/codex.md](docs/agents/codex.md) | `config.toml` matcher groups | Native + junction `.codex/skills` | `.codex/prompts/` |
-| **Qoder / Qoder CLI** | `.qoder/settings.json` | [docs/agents/qoder.md](docs/agents/qoder.md) | `.qoder/settings.json` (all 3 events) | Junction `.qoder/skills` | `.qoder/commands/` |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | [docs/agents/copilot.md](docs/agents/copilot.md) | n/a (IDE-scoped) | Native (`.agents/skills/`) | `.github/prompts/*.prompt.md` |
-| **Freebuff** | `AGENTS.md` + `.agents/mcp.json` | [docs/agents/freebuff.md](docs/agents/freebuff.md) | Behavioral rules (`AGENTS.md`) | Native (`.agents/skills/`) | via `/plan` prompt |
-| **Goose (Block)** | `.goosehints` + `.goose/config.yaml` | [docs/agents/goose.md](docs/agents/goose.md) | `.goose/hooks.json` (all 3 events) | Pointer (`.goosehints`) | `.goose/commands/` |
-| **Kimi Code CLI** | `.kimi/config.toml` + `.kimi-code/mcp.json` | [docs/agents/kimi.md](docs/agents/kimi.md) | n/a (prompt-level rules) | Native (`.agents/skills/`) | `.kimi/commands/` |
-| **JetBrains Junie** | `.junie/playbook.md` | [docs/agents/junie.md](docs/agents/junie.md) | Junie guidelines | Native (`.agents/skills/`) | `.junie/commands/` |
-| **Cline / Roo Code** | `.clinerules` | [docs/agents/cline.md](docs/agents/cline.md) | n/a (prompt-level rules) | Junction `.cline/skills` | `.cline/commands/` |
-| **Windsurf** | `.windsurfrules` | [docs/agents/windsurf.md](docs/agents/windsurf.md) | n/a (prompt-level rules) | Junction `.windsurf/skills` | `.windsurf/commands/` |
+| Command | What it does |
+|---|---|
+| `/plan` | Turns your request into a written spec, plan and task list under `specs/<number>-<name>/` |
+| `/tdd` | Runs a strict red → green → refactor cycle |
+| `/test` | Runs the tests and shows the failing ones |
+| `/review` | Two-stage code review (correctness & security, then simplicity) |
+| `/simplify` | Simplifies code without changing behaviour |
+| `/refactor-clean` | Removes dead code and splits files over 400 lines |
+| `/verify` | Runs the full 9-suite verification suite |
+| `/build-fix` | Diagnoses and fixes build or type errors |
 
 ---
 
-## 5. Verification & Health Check
+## 5. How the pieces fit together
 
-Run the unified test runner to ensure 100% link integrity, script syntax, tool availability, and boundary enforcement:
-
-```cmd
-:: Windows 1-Click Batch Wrapper:
-verify-all.cmd
-
-:: Windows PowerShell (ExecutionPolicy Bypass):
-powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/verify-all.ps1
-
-:: Linux / macOS:
-./scripts/verify-all.sh
+```
+┌─ ALWAYS LOADED ──────────────────────────────────────────────┐
+│  AGENTS.md        ← the short index (<= 1,000 tokens)         │
+└───────────────────────────────┬───────────────────────────────┘
+                                │ points to
+┌─ LOADED WHEN NEEDED ──────────▼─────────────────────────────┐
+│  .agents/rules/    ← 7 short rule files                       │
+│    planning-standards · code-quality · ui-standards ·         │
+│    core-invariants · automation · codebase-exploration ·      │
+│    mcp-codemode                                              │
+└───────────────────────────────┬───────────────────────────────┘
+                                │ points to
+┌─ LOADED ON DEMAND ────────────▼─────────────────────────────┐
+│  .agents/skills/   ← 377 skills, each with a governing rule   │
+│  .specify/         ← spec-driven development templates        │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-The verification suite executes 9 programmatic checks:
-1. `scripts/verify-tools.{ps1,sh}`: Validates Git, Node, Python runtimes and MCP command resolvers.
-2. `scripts/verify-scripts.{ps1,sh}`: Validates PowerShell AST syntax, Bash script syntax, Python compilation, and hook dry-runs.
-3. `scripts/verify-file-limits.{ps1,sh}`: Enforces the 400-line cap on effective lines (blank lines and comment-only lines excluded), identically on both platforms.
-4. `scripts/verify-links.py`: Code-block aware parser confirming all internal Markdown links and GitHub anchor slugs resolve.
-5. `scripts/sync-agent-adapters.sh`: Creates and verifies the six skill junctions and distributes the slash commands.
-6. `scripts/test-bootstrap.{ps1,sh}`: Runs an isolated sandbox clone asserting zero files are touched outside the sandbox, plus config parsing, skill-wiring coverage and ignore-file mirroring.
-7. `scripts/generate-skills-index.py --check`: Proves the skill wiring map matches the store on disk.
-8. `scripts/verify-adapters.py`: Proves every agent adapter keeps the same rules, MCP servers, hooks and commands.
-9. `scripts/verify-specify-integrity.py`: Proves the vendored Spec Kit files match their recorded checksums.
+**Why the layering?** An AI agent's context window is expensive. This setup
+keeps the always-loaded part tiny (one short file) and pulls in the heavy
+material only while a task actually needs it. That is why your agent stays
+quick instead of reading 50,000 lines of instructions on every message.
 
-Project-level checks that need Node.js:
+**The three layers in plain English:**
+
+- **AGENTS.md** — the "table of contents". Always in context. Points to everything else.
+- **.agents/rules/** — the "how we do things here" files. 7 of them, each loaded when relevant.
+- **.agents/skills/** — the "how-to" library. 377 detailed procedures, loaded one at a time.
+
+---
+
+## 6. Your project's folder layout
+
+```
+my-project/
+├── AGENTS.md              ← agent index (always loaded)
+├── CLAUDE.md              ← Claude Code entry point
+├── .agents/
+│   ├── rules/             ← 7 rule files + the skill wiring map
+│   ├── skills/            ← 377 skills (the big library)
+│   ├── commands/          ← the 8 slash commands (source of truth)
+│   ├── mcp.json           ← MCP server definitions
+│   └── memory/            ← cross-session memory
+├── .specify/              ← spec-driven development (Spec Kit)
+├── specs/                 ← your feature specs (created by /plan)
+├── .planning/             ← live task state (task_plan, findings, progress)
+├── src/features/          ← your actual code, one folder per feature
+├── scripts/               ← bootstrap + verification scripts
+├── docs/agents/           ← per-agent setup guides
+└── package.json           ← npm test / lint / typecheck
+```
+
+**Where to put your code:** one folder per feature under `src/features/`.
+Copy the example:
 
 ```bash
-npm install       # once
-npm test          # node:test over src/features/**/*.test.ts
-npm run lint      # ESLint 9 flat config
-npm run typecheck # tsc --noEmit
+cp -r src/features/_template src/features/my-feature
 ```
+
+Each feature folder holds `feature.ts` (logic), `feature.types.ts` (types),
+`feature.test.ts` (tests), `index.ts` (exports) and a `README.md`.
 
 ---
 
-## 6. Core Slash Commands & Workflows
+## 7. Using it with different agents
 
-All eight commands are distributed from the single canonical source
-`.agents/commands/` to every adapter by `scripts/sync-agent-adapters.sh`.
+Every agent gets the same rules, skills, MCP servers and commands. Per-agent
+setup guides live in [`docs/agents/`](docs/agents):
 
-| Command | Workflow Description | Primary Rule File |
-|---|---|---|
-| `/plan` | Scaffold and fill the specification, plan and task artifacts from `.specify/` templates. | [.agents/rules/planning-standards.md](.agents/rules/planning-standards.md) |
-| `/test` | Execute TDD test loop with strict failing-test assertions. | [.agents/rules/code-quality.md](.agents/rules/code-quality.md) |
-| `/tdd` | Enforce the full red-green-refactor cycle. | [.agents/rules/code-quality.md](.agents/rules/code-quality.md) |
-| `/review` | Execute 2-stage code review (correctness, security, simplicity). | [.agents/rules/code-quality.md](.agents/rules/code-quality.md) |
-| `/simplify` | Run Karpathy-compliant surgical code simplification. | [.agents/rules/code-quality.md](.agents/rules/code-quality.md) |
-| `/refactor-clean` | Remove dead code and enforce 400-line feature-folder modularity. | [.agents/rules/code-quality.md](.agents/rules/code-quality.md) |
-| `/verify` | Run the full programmatic verification suite. | [.agents/rules/automation.md](.agents/rules/automation.md) |
-| `/build-fix` | Diagnose and surgically fix build or type errors. | [.agents/rules/automation.md](.agents/rules/automation.md) |
+| Agent | Setup guide |
+|---|---|
+| Claude Code | [claude.md](docs/agents/claude.md) |
+| OpenCode | [opencode.md](docs/agents/opencode.md) |
+| Cursor | [cursor.md](docs/agents/cursor.md) |
+| Codex CLI | [codex.md](docs/agents/codex.md) |
+| GitHub Copilot | [copilot.md](docs/agents/copilot.md) |
+| Antigravity | [antigravity.md](docs/agents/antigravity.md) |
+| Qoder | [qoder.md](docs/agents/qoder.md) |
+| Kimi Code CLI | [kimi.md](docs/agents/kimi.md) |
+| Goose | [goose.md](docs/agents/goose.md) |
+| JetBrains Junie | [junie.md](docs/agents/junie.md) |
+| Cline / Roo Code | [cline.md](docs/agents/cline.md) |
+| Windsurf | [windsurf.md](docs/agents/windsurf.md) |
+| Freebuff | [freebuff.md](docs/agents/freebuff.md) |
 
-To switch MCP tool profiles dynamically:
+You can check that every adapter is still wired correctly at any time:
+
 ```bash
-./scripts/mcp-profile.sh <core|ui|compression|all>   # POSIX
-./scripts/mcp-profile.sh --status                    # show the current profile
-```
-```powershell
-powershell -ExecutionPolicy Bypass -File ./scripts/mcp-profile.ps1 <core|ui|compression|all>
+python3 scripts/verify-adapters.py
 ```
 
 ---
 
-## 7. License & Third-Party Credits
+## 8. Configuring things
 
-All custom code, configurations, rules, and scripts are licensed under the [MIT License](LICENSE). Third-party tools, skills, and libraries integrated into this boilerplate are detailed in [THIRD_PARTY.md](THIRD_PARTY.md) with pinned commit SHAs, licenses, context costs, and adaptation notes.
+### MCP servers (the tools your agent can call)
+
+Three servers are available: `graphify` (codebase search), `ui-registry`
+(component lookup) and `headroom` (output compression). Only `graphify` is on
+by default, to keep your agent's context small. Switch profiles with:
+
+```bash
+./scripts/mcp-profile.sh core          # graphify only (default)
+./scripts/mcp-profile.sh ui             # + component lookup
+./scripts/mcp-profile.sh compression    # + output compression
+./scripts/mcp-profile.sh all
+./scripts/mcp-profile.sh --status       # see what is active now
+```
+
+On Windows: `powershell -ExecutionPolicy Bypass -File ./scripts/mcp-profile.ps1 ui`
+
+The switcher updates **every** agent's config at once, so they never disagree.
+
+### The project constitution (your rules of the house)
+
+[`.specify/memory/constitution.md`](.specify/memory/constitution.md) holds the
+non-negotiables: strict project scoping, no committed secrets, TDD, the
+400-line limit, the skill-wiring rule. Edit it to add your own rules — it is
+your project's constitution, and the plan template has a "Constitution Check"
+section that forces the agent to honour it.
+
+### Agent rules
+
+The seven rule files in `.agents/rules/` are plain Markdown. Read one, edit
+one. `code-quality.md` is a good starting point for your own conventions.
+
+---
+
+## 9. Making it yours
+
+| I want to… | Do this |
+|---|---|
+| Add my own rules | Add a file in `.agents/rules/`, reference it from `AGENTS.md` |
+| Add a skill | Create `.agents/skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`), then run `python3 scripts/generate-skills-index.py` |
+| Change the spec templates | Drop an override in `.specify/templates/overrides/` — it wins over the built-in template |
+| Add a feature | `cp -r src/features/_template src/features/<name>` and start at `feature.test.ts` |
+| Change the slash commands | Edit `.agents/commands/*.md`, then run `./scripts/sync-agent-adapters.sh` to push them to every agent |
+| Change the file-size limit | Update `MAX_LINES` in `scripts/verify-file-limits.sh` **and** `scripts/verify-file-limits.ps1` (keep them identical), plus `eslint.config.js` |
+| Check nothing drifted | `./scripts/verify-all.sh` |
+
+Two habits worth keeping:
+
+1. **Run `./scripts/verify-all.sh` before you commit.** It catches broken
+   links, oversized files, missing rules and adapter drift in seconds.
+2. **Never edit the files under `.agents/skills/`** — they are vendored
+   third-party content. Put your own skills in a new folder.
+
+---
+
+## 10. When something goes wrong
+
+| Symptom | Fix |
+|---|---|
+| `verify-all` says a skill junction is missing | Run `./scripts/sync-agent-adapters.sh` (Windows: `scripts\sync-agent-adapters.ps1`) |
+| Your agent says it has no skills | Same command — the junctions are what give it access to `.agents/skills/` |
+| "Skill wiring" check fails after adding a skill | Run `python3 scripts/generate-skills-index.py` to regenerate the index |
+| "Adapter parity" check fails | Run `python3 scripts/verify-adapters.py` — it prints exactly which adapter lost what |
+| Agent ignores the 400-line limit | Make sure `npm install` has been run so ESLint is available |
+| Everything feels slow / context too big | Switch back to the core MCP profile: `./scripts/mcp-profile.sh core` |
+| Hook blocks a write you expected to be allowed | The path resolved outside the project root — check whether it is a symlink; the guardrail compares physical paths |
+| `npm test` finds no tests | Tests live in `src/features/**/*.test.ts` — add one per feature |
+
+---
+
+## License & credits
+
+All original code, rules and scripts are MIT licensed — see [LICENSE](LICENSE).
+Third-party skills and tools (Superpowers, Spec Kit, Impeccable, Agency
+personas, and 15 more) are catalogued with pinned commit SHAs, licences and
+adaptation notes in [THIRD_PARTY.md](THIRD_PARTY.md).
