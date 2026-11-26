@@ -19,11 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-This licence covers the original code, rules, scripts and documentation in
-this repository. Vendored third-party content (Superpowers, Spec Kit,
-Impeccable, agency personas and others) keeps its own licence — see
-THIRD_PARTY.md for the pinned commit SHAs, licences and adaptation notes of
-every upstream dependency.
