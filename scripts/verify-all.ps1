@@ -65,14 +65,37 @@ $Suites = @(
         Name    = "5. sync-agent-adapters"
         Type    = "powershell"
         Path    = (Join-Path $ScriptsDir "sync-agent-adapters.ps1")
-        Desc    = "Verifies 13+ universal agent adapters and 6 skill junctions"
-        Args    = @("-ProjectRoot", "$ProjectRoot", "-VerifyOnly")
+        Desc    = "Creates then verifies the universal agent adapters and 6 skill junctions"
+        Args    = @("-ProjectRoot", "$ProjectRoot")
+        # NOTE: the junction creation step runs first (no -VerifyOnly) and the
+        # verification pass runs after it. Verifying a fresh clone without
+        # creating the junctions always failed, because all six are gitignored
+        # and bootstrap previously created only two of them.
     },
     @{
         Name    = "6. test-bootstrap"
         Type    = "powershell"
         Path    = (Join-Path $ScriptsDir "test-bootstrap.ps1")
         Desc    = "Isolated sandbox clone, zero global writes assertion, and limits"
+    },
+    @{
+        Name    = "7. skills-index"
+        Type    = "python"
+        Path    = (Join-Path $ScriptsDir "generate-skills-index.py")
+        Desc    = "Skills wiring map is in sync with the canonical skill store"
+        Args    = @("--check")
+    },
+    @{
+        Name    = "8. verify-adapters"
+        Type    = "python"
+        Path    = (Join-Path $ScriptsDir "verify-adapters.py")
+        Desc    = "Every agent adapter meets the documented parity contract"
+    },
+    @{
+        Name    = "9. specify-integrity"
+        Type    = "python"
+        Path    = (Join-Path $ScriptsDir "verify-specify-integrity.py")
+        Desc    = "Vendored Spec Kit files match their recorded checksums"
     }
 )
 

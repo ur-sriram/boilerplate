@@ -10,7 +10,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1"
+            "command": "node ./scripts/hooks/run-hook.mjs protect-config"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node ./scripts/hooks/run-hook.mjs rtk-filter"
           }
         ]
       }
@@ -20,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1"
+            "command": "node ./scripts/hooks/run-hook.mjs session-start"
           }
         ]
       }

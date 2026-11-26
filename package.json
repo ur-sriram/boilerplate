@@ -1,0 +1,37 @@
+{
+  "name": "multi-agent-boilerplate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Project-level, multi-agent AI coding boilerplate: 377 wired skills, spec-driven development, cross-platform guardrails and verification suite.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "test": "node --test \"src/features/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "verify": "bash scripts/verify-all.sh",
+    "skills:index": "python3 scripts/generate-skills-index.py",
+    "skills:check": "python3 scripts/generate-skills-index.py --check",
+    "adapters:check": "python3 scripts/verify-adapters.py",
+    "mcp:status": "python3 scripts/mcp-profile.py --status",
+    "mcp:core": "python3 scripts/mcp-profile.py core",
+    "mcp:ui": "python3 scripts/mcp-profile.py ui",
+    "mcp:compression": "python3 scripts/mcp-profile.py compression",
+    "mcp:all": "python3 scripts/mcp-profile.py all"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.11",
+    "eslint": "^10.15.0",
+    "globals": "^16.4.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.74.0"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.3.1"
+  }
+}

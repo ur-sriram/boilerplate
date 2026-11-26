@@ -6,10 +6,10 @@ Production-ready, project-level boilerplate for autonomous coding agents. Zero g
 
 ## 1. Non-Negotiable Invariants
 
-- **Strict Project Scoping**: NEVER modify files outside `c:\sriram\boilerplate`. Writes to `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, or `~/.claude` are forbidden.
+- **Strict Project Scoping**: NEVER modify files outside the project root (the directory that contains this `AGENTS.md`). Writes to `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, or `~/.claude` are forbidden.
 - **Secret Hygiene**: ZERO secrets committed. Keep sensitive credentials in `.env` (strictly mirrored and ignored by `.gitignore` and `.aiignore`); see [`.env.example`](.env.example).
 - **Episodic Memory**: Cross-session memory and learned operational facts persist in `.agents/memory/` using the `claude-mem` architecture.
-- **Single Canonical Skill Store**: Skills reside strictly in `.agents/skills/`. Agents access them directly or via zero-elevation NTFS directory junctions (`mklink /J`) and symlinks.
+- **Single Canonical Skill Store**: Skills reside strictly in `.agents/skills/`. Agents access them directly or via zero-elevation NTFS directory junctions (`mklink /J`) and symlinks. `scripts/sync-agent-adapters.sh` creates and verifies all six junctions.
 
 ---
 
@@ -31,17 +31,17 @@ Whenever creating or modifying web interfaces, agents MUST follow this sequentia
 
 ## 3. Code Quality, Modularity & Architecture
 
-- **File Length Limits**: Strict **maximum 400 lines** per file. Target range: **200 to 400 lines** for core feature modules. Enforced via `tsconfig.json`, `.eslintrc.json`, and `scripts/verify-file-limits.ps1`.
+- **File Length Limits**: Strict **maximum 400 lines** per file. Target range: **200 to 400 lines** for core feature modules. Enforced via `tsconfig.json`, `eslint.config.js`, and `scripts/verify-file-limits.{sh,ps1}`.
 - **Feature-Folder Architecture**: Organize all capabilities into dedicated vertical slices under `src/features/<feature-name>/` (following `src/features/_template/`).
 - **Codebase Exploration via Graphify**: NEVER guess or run naive whole-repo greps. Use `Graphify-Labs/graphify` (`search_graph`, `trace_path`, `get_code_snippet`, `query_graph`).
 - **Cloudflare CodeMode MCP Rule**: Avoid token burn from massive MCP tool schemas. Keep the default profile locked to `core` and execute programmatic scripts or on-demand profile switching (`scripts/mcp-profile.ps1 -Profile <core|ui|compression|all>`).
-- **Planning with Files & Spec-Kit**: Maintain persistent execution files in `.planning/` (`task_plan.md`, `findings.md`, `progress.md`) and specifications in `.specify/`.
+- **Planning with Files & Spec-Kit**: Maintain persistent execution files in `.planning/` (`task_plan.md`, `findings.md`, `progress.md`) and specifications in `specs/<NNN>-<slug>/`, scaffolded from the templates in `.specify/` (see `.specify/README.md`).
 
 ---
 
 ## 4. Autonomous Skill Discovery Protocol
 
-The repository contains a canonical store of 300+ skills across:
+The repository contains a canonical store of **377 skills**, every one mapped to a governing rule in `.agents/rules/skills-index.md`, across:
 - **`superpowers/`**: Engineering workflows (`test-driven-development`, `systematic-debugging`, `writing-plans`, etc.).
 - **`agency-agents/`**: 270+ domain-expert agent skills.
 - **`agent-skills/`**: Addy Osmani engineering and workflow skills.
@@ -62,27 +62,30 @@ Zero-duplication configuration and discovery guides for all major coding agents:
 | Universal Standard | `AGENTS.md` + `.agents/rules/*.md` | Native `.agents/skills/` | [README.md](README.md) |
 | Antigravity IDE / CLI | `.antigravity/settings.json` | Native `.agents/skills/` | [docs/agents/antigravity.md](docs/agents/antigravity.md) |
 | OpenCode | `opencode.json` + `.opencode/` | Native `.agents/skills/` | [docs/agents/opencode.md](docs/agents/opencode.md) |
-| Claude Code | `CLAUDE.md` | `.claude/skills` Junction | [CLAUDE.md](CLAUDE.md) |
-| Cursor | `.cursor/rules/core.mdc` | `.cursor/skills` Junction | [README.md](README.md) |
-| Windsurf | `.windsurfrules` | `.windsurf/skills` Junction | [README.md](README.md) |
-| GitHub Copilot | `.github/copilot-instructions.md` | Native | [README.md](README.md) |
-| Cline / Roo Code | `.clinerules` | `.cline/skills` Junction | [README.md](README.md) |
+| Claude Code | `CLAUDE.md` + `.claude/settings.json` | `.claude/skills` Junction | [docs/agents/claude.md](docs/agents/claude.md) |
+| Cursor | `.cursor/rules/core.mdc` + `.cursor/mcp.json` | `.cursor/skills` Junction | [docs/agents/cursor.md](docs/agents/cursor.md) |
+| Windsurf | `.windsurfrules` | `.windsurf/skills` Junction | [docs/agents/windsurf.md](docs/agents/windsurf.md) |
+| GitHub Copilot | `.github/copilot-instructions.md` | Native | [docs/agents/copilot.md](docs/agents/copilot.md) |
+| Cline / Roo Code | `.clinerules` | `.cline/skills` Junction | [docs/agents/cline.md](docs/agents/cline.md) |
 | Codex CLI | `.codex/config.toml` | `.codex/skills` Junction | [docs/agents/codex.md](docs/agents/codex.md) |
 | Qoder / CLI | `.qoder/settings.json` | `.qoder/skills` Junction | [docs/agents/qoder.md](docs/agents/qoder.md) |
 | Goose | `.goosehints` + `.goose/config.yaml`| Native | [docs/agents/goose.md](docs/agents/goose.md) |
-| Kimi CLI | `.kimi/config.toml` | Native | [docs/agents/kimi.md](docs/agents/kimi.md) |
+| Kimi CLI | `.kimi/config.toml` + `.kimi-code/mcp.json` | Native | [docs/agents/kimi.md](docs/agents/kimi.md) |
 | Junie | `.junie/playbook.md` | Native | [docs/agents/junie.md](docs/agents/junie.md) |
 | Freebuff | `AGENTS.md` + `.agents/mcp.json` | Native | [docs/agents/freebuff.md](docs/agents/freebuff.md) |
+
+Every row above is enforced by `scripts/verify-adapters.py`: an adapter that loses its rules, MCP servers, hooks or slash commands fails the verification suite.
 
 ---
 
 ## 6. Verification & Slash Commands
 
-- Verification Suite: `verify-all.cmd` (Windows) or `./scripts/verify-all.sh` (POSIX).
+- Verification Suite: `verify-all.cmd` (Windows) or `./scripts/verify-all.sh` (POSIX) — **9 suites, all must pass**.
+- Project Checks: `npm test`, `npm run lint`, `npm run typecheck` (requires `npm install`).
 - File Limits Check: `powershell -ExecutionPolicy Bypass -File ./scripts/verify-file-limits.ps1`
 - Sync Agent Adapters: `powershell -ExecutionPolicy Bypass -File ./scripts/sync-agent-adapters.ps1`
-- Slash Commands:
-  - `/plan`: Initiate architectural specification or task plan.
+- Slash Commands (canonical source: `.agents/commands/`, distributed to every adapter):
+  - `/plan`: Scaffold and fill the specification, plan and task artifacts from `.specify/` templates.
   - `/review`: Run 2-stage code review (correctness, security, simplicity).
   - `/test`: Run TDD cycle with failing-test assertions.
   - `/simplify`: Run Karpathy-compliant surgical simplification.

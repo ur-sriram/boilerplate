@@ -2,12 +2,17 @@
   "hooks": [
     {
       "event": "PreToolUse",
-      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1",
+      "command": "node ./scripts/hooks/run-hook.mjs protect-config",
       "on_failure": "block"
     },
     {
+      "event": "PostToolUse",
+      "command": "node ./scripts/hooks/run-hook.mjs rtk-filter",
+      "on_failure": "continue"
+    },
+    {
       "event": "SessionStart",
-      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1",
+      "command": "node ./scripts/hooks/run-hook.mjs session-start",
       "on_failure": "continue"
     }
   ]

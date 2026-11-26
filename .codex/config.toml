@@ -1,17 +1,47 @@
 # Codex CLI Project Configuration
-# Scoped strictly to project level; zero global side-effects
+# Scoped strictly to project level; zero global side-effects.
+#
+# Codex reads AGENTS.md and .agents/skills/ natively, so no rule or skill
+# indirection is needed here. The previous `rules_file` and
+# `[project].skills_directory` keys were not part of Codex's configuration
+# reference and were silently ignored; they have been removed.
 
-rules_file = "AGENTS.md"
-
-[project]
-name = "boilerplate"
-skills_directory = ".codex/skills"
+# --- MCP servers -----------------------------------------------------------
+# Only graphify is enabled by default (the "core" profile, <= 350 tokens).
+# ui-registry and headroom belong to the ui / compression profiles and are
+# toggled by scripts/mcp-profile.sh.
 
 [mcp_servers.graphify]
 command = "uvx"
 args = ["--from", "graphifyy", "graphify-mcp"]
+enabled = true
 
-[hooks]
-pre_tool_use = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1"
-post_tool_use = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/rtk-filter.ps1"
-session_start = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1"
+[mcp_servers.ui-registry]
+command = "npx"
+args = ["-y", "ui-registry-mcp@0.7.1"]
+enabled = false
+
+[mcp_servers.headroom]
+command = "uvx"
+args = ["--from", "headroom-ai[mcp]", "headroom", "mcp", "serve"]
+enabled = false
+
+# --- Lifecycle hooks -------------------------------------------------------
+# Codex expects hooks.<Event> to be an ARRAY OF MATCHER GROUPS, each with its
+# own `hooks` list of {type, command} objects. The previous flat string keys
+# (pre_tool_use = "...") matched no schema and never fired.
+#
+# run-hook.mjs is a Node.js dispatcher, so the same command string works on
+# Windows, macOS and Linux (the previous powershell-only entries silently
+# no-op'd on POSIX).
+
+[[hooks.PreToolUse]]
+matcher = "Write|Edit|MultiEdit"
+hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs protect-config" }]
+
+[[hooks.PostToolUse]]
+matcher = "Bash"
+hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs rtk-filter" }]
+
+[[hooks.SessionStart]]
+hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs session-start" }]

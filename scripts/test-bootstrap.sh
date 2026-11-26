@@ -27,6 +27,11 @@ if command -v python3 >/dev/null 2>&1; then
 elif command -v python >/dev/null 2>&1; then
     PYTHON_BIN="python"
 fi
+# NOTE: every assertion below used to reference ${PYTHON_CMD}, which was never
+# defined. Under `set -u` that aborted the whole script at the first use, so
+# the config-parse, skill-wiring and ignore-mirroring assertions never ran.
+# PYTHON_CMD may still be supplied by the caller to pin a specific interpreter.
+PYTHON_CMD="${PYTHON_CMD:-${PYTHON_BIN:-}}"
 
 # ----------------------------------------------------------------------
 # 1. Snapshot Sensitive Global Directories Before Bootstrap
@@ -212,25 +217,77 @@ from pathlib import Path
 
 skills_dir = Path('${SKILLS_DIR}')
 rules_dir = Path('${RULES_DIR}')
+index_file = rules_dir / 'skills-index.md'
 
-skill_files = list(skills_dir.rglob('SKILL.md'))
-rule_files = list(rules_dir.glob('*.md'))
+skill_files = sorted(skills_dir.rglob('SKILL.md'))
+rule_files = sorted(rules_dir.glob('*.md'))
+rule_names = {rf.name for rf in rule_files}
 
-all_rules_text = '\n'.join([rf.read_text(encoding='utf-8', errors='replace') for rf in rule_files])
-unwired = []
+# Parse the wiring map: | Skill Name | Category | Canonical Path | Governing Rule | Description |
+rows = []
+if index_file.exists():
+    for line in index_file.read_text(encoding='utf-8').splitlines():
+        if not line.strip().startswith('|'):
+            continue
+        cells = [c.strip() for c in line.strip().strip('|').split('|')]
+        if len(cells) < 4:
+            continue
+        if cells[0].lower().startswith('skill name') or set(cells[0]) <= set('-: '):
+            continue
+        rows.append(cells)
 
+indexed = {}
+malformed = []
+for cells in rows:
+    path_cell = cells[2]
+    rule_cell = cells[3] if len(cells) > 3 else ''
+    rel = path_cell.replace('[', '').replace(']', '').strip()
+    # strip a markdown link target if present
+    if '(' in rel and rel.endswith(')'):
+        rel = rel[rel.index('(') + 1:-1]
+    rel = rel.replace('../../', '').lstrip('/')
+    if not rel:
+        malformed.append(cells[0])
+        continue
+    rule = rule_cell.replace('[', '').replace(']', '').strip()
+    if '(' in rule and rule.endswith(')'):
+        rule = rule[rule.index('(') + 1:-1]
+    indexed[rel] = rule
+
+missing_from_index = []
+missing_rule = []
+missing_on_disk = []
 for sf in skill_files:
-    skill_name = sf.parent.name
-    if skill_name not in all_rules_text:
-        unwired.append(skill_name)
+    rel = str(sf.relative_to(skills_dir.parent.parent))  # .agents/skills/<...>
+    if rel not in indexed:
+        missing_from_index.append(rel)
+        continue
+    rule = indexed[rel]
+    if not rule:
+        missing_rule.append(rel)
+    else:
+        target = (rules_dir / rule).resolve()
+        if not target.exists():
+            missing_rule.append(f'{rel} -> {rule}')
 
-print(f'[INFO] Verified {len(skill_files)} skill(s) against {len(rule_files)} rule file(s).')
-if not unwired:
-    print(f'[PASS] 100% of skills ({len(skill_files)}/{len(skill_files)}) are wired to at least one rule file.')
-    sys.exit(0)
-else:
-    print(f'[FAIL] Found {len(unwired)} orphan skill(s): {unwired}')
-    sys.exit(1)
+for rel in indexed:
+    if not (skills_dir.parent.parent / rel).exists():
+        missing_on_disk.append(rel)
+
+print(f'[INFO] {len(skill_files)} skill(s) on disk, {len(indexed)} row(s) in skills-index.md, {len(rule_files)} rule file(s).')
+ok = True
+if missing_from_index:
+    ok = False
+    print(f'[FAIL] {len(missing_from_index)} skill(s) missing from skills-index.md: {missing_from_index[:10]}')
+if missing_rule:
+    ok = False
+    print(f'[FAIL] {len(missing_rule)} skill(s) without a resolvable governing rule: {missing_rule[:10]}')
+if missing_on_disk:
+    ok = False
+    print(f'[FAIL] {len(missing_on_disk)} indexed path(s) do not exist on disk: {missing_on_disk[:10]}')
+if ok:
+    print(f'[PASS] 100% of skills ({len(skill_files)}/{len(skill_files)}) are indexed AND wired to a governing rule file.')
+sys.exit(0 if ok else 1)
 " 2>&1) || WIRING_CODE=$?
 
     echo "${SKILL_WIRING_RES}"
@@ -259,11 +316,11 @@ ai_patterns = [line.strip() for line in ai_path.read_text(encoding='utf-8').spli
 git_patterns = [line.strip() for line in git_path.read_text(encoding='utf-8').splitlines() if line.strip() and not line.strip().startswith('#')]
 
 git_set = set(git_patterns)
-git_norm = {p.rstrip('/\\') for p in git_patterns}
+git_norm = {p.rstrip('/').rstrip(chr(92)) for p in git_patterns}
 
 missing = []
 for p in ai_patterns:
-    if p not in git_set and p.rstrip('/\\') not in git_norm:
+    if p not in git_set and p.rstrip('/').rstrip(chr(92)) not in git_norm:
         missing.append(p)
 
 print(f'[INFO] Evaluated {len(ai_patterns)} pattern(s) from .aiignore against .gitignore.')

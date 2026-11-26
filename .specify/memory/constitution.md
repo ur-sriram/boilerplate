@@ -7,7 +7,7 @@ This Constitution defines the supreme operational law, non-negotiable boundaries
 ## Core Principles
 
 ### I. Strict Project Scoping & Zero Global Pollution (NON-NEGOTIABLE)
-All file reads, writes, edits, and terminal operations MUST strictly remain within the project root (`c:\sriram\boilerplate`). Modifying, inspecting, or creating files outside this project directory—including `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, `~/.claude`, `/etc`, or global package registries—is strictly forbidden. PreToolUse hooks (`scripts/hooks/protect-config.ps1` and `scripts/hooks/protect-config.sh`) intercept and abort any violation with exit code 1.
+All file reads, writes, edits, and terminal operations MUST strictly remain within the project root (the directory that contains this constitution). Modifying, inspecting, or creating files outside this project directory—including `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, `~/.claude`, `/etc`, or global package registries—is strictly forbidden. PreToolUse hooks (`scripts/hooks/protect-config.ps1` and `scripts/hooks/protect-config.sh`) intercept and abort any violation with exit code 1.
 
 ### II. Secret Hygiene & Zero Committed Credentials
 No secret, API key, private token, webhook secret, or credential may ever be committed to version control. All secrets are stored exclusively in `.env`, which is strictly ignored by `.gitignore` and mirrored in `.aiignore`. The [`.env.example`](../../.env.example) file provides the canonical public template for required environment variables.
@@ -46,10 +46,17 @@ Skills reside in a single canonical directory ([`.agents/skills/`](../../.agents
 ## Development Workflow & Quality Gates
 
 All development activities follow the four-phase Spec-Kit lifecycle:
-1. **Specify**: Draft specification using `.specify/templates/spec-template.md`.
-2. **Plan**: Formulate architectural plan using `/plan` and `.specify/templates/plan-template.md`.
-3. **Execute**: Implement via atomic beads using `executing-plans` and TDD.
-4. **Verify & Review**: Execute full programmatic verification via `verify-all.cmd`, run two-stage code review via `/review`, and surgically simplify via `/simplify`.
+1. **Specify**: Scaffold `specs/<NNN>-<slug>/` with
+   `.specify/scripts/{bash,powershell}/create-new-feature.*`, then draft
+   `spec.md` from `.specify/templates/spec-template.md`.
+2. **Plan**: Fill `plan.md` (from `plan-template.md`, including its mandatory
+   Constitution Check) using `/plan`.
+3. **Execute**: Implement via atomic, independently verifiable tasks from
+   `tasks.md` using `executing-plans` and TDD.
+4. **Verify & Review**: Execute the full programmatic verification suite
+   (`verify-all.cmd` / `scripts/verify-all.sh` — nine suites, all must pass),
+   run two-stage code review via `/review`, and surgically simplify via
+   `/simplify`.
 
 ---
 

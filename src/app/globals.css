@@ -1,0 +1,4 @@
+/* Base stylesheet referenced by components.json and tailwind.config.js. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

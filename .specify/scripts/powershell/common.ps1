@@ -328,6 +328,21 @@ function Format-SpecKitCommand {
     }
     $name = $name -replace '\.', $separator
 
+    # This repository ships the Spec Kit engine WITHOUT an agent integration
+    # (see .specify/integration.json), so "/speckit.<phase>" does not exist.
+    # Point at the command this repository actually provides.
+    $localCommands = @{
+        'specify'  = '/plan'
+        'plan'     = '/plan'
+        'tasks'    = '/plan'
+        'checklist'= '/plan'
+        'implement'= '/plan'
+    }
+    $key = $name -replace '\.', '-'
+    if ($localCommands.ContainsKey($key)) {
+        return $localCommands[$key]
+    }
+
     return "/speckit$separator$name"
 }
 

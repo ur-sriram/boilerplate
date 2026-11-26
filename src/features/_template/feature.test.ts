@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FeatureModule } from './feature.js';
+import { FeatureModule } from './feature.ts';
 
 test('FeatureModule executes when enabled', () => {
   const mod = new FeatureModule({ id: 'f1', name: 'Sample', enabled: true });

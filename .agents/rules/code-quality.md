@@ -13,8 +13,10 @@ To prevent unmaintainable monolithic files and ensure clean separation of concer
 - **Target Feature Size**: Ideal feature module sizes range from **200 to 400 lines**. Smaller single-responsibility utilities and types are encouraged.
 - **Automated Enforcement**:
   - `tsconfig.json`: Strict type-checking (`strict: true`, `noUncheckedIndexedAccess: true`).
-  - `.eslintrc.json`: Enforces `"max-lines": ["error", { "max": 400, "skipBlankLines": true, "skipComments": true }]`.
-  - `scripts/verify-file-limits.ps1`: Programmatic verification check executed during CI and test suite runs.
+  - `eslint.config.js`: ESLint 9 flat config enforcing `"max-lines": ["error", { "max": 400, "skipBlankLines": true, "skipComments": true }]`.
+    (Migrated from the legacy `.eslintrc.json`, which ESLint 9 no longer reads.)
+  - `scripts/verify-file-limits.{ps1,sh}`: Programmatic verification check executed during CI and test suite runs.
+    Both twins count *effective* lines (blank lines and comment-only lines excluded) so they agree with the ESLint rule.
 
 ---
 

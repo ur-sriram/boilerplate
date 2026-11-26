@@ -20,10 +20,16 @@ skills_directory = ".codex/skills"
 command = "uvx"
 args = ["--from", "graphifyy", "graphify-mcp"]
 
-[hooks]
-pre_tool_use = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1"
-post_tool_use = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/rtk-filter.ps1"
-session_start = "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1"
+[[hooks.PreToolUse]]
+matcher = "Write|Edit|MultiEdit"
+hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs protect-config" }]
+
+[[hooks.PostToolUse]]
+matcher = "Bash"
+hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs rtk-filter" }]
+
+[[hooks.SessionStart]]
+hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs session-start" }]
 ```
 
 ## 3. Single Canonical Skill Store & Directory Junctions
@@ -44,11 +50,21 @@ This guarantees Codex accesses the identical canonical skills maintained in `.ag
 
 ## 4. Lifecycle Hooks Integration
 
-Codex CLI invokes executable scripts from `scripts/hooks/`:
+Codex expects `hooks.<Event>` to be an **array of matcher groups**, each with
+its own `hooks` list of `{type = "command", command = "..."}` objects. Flat
+string keys (the previous `pre_tool_use = "..."` form) match no documented
+schema and never fired.
 
-- `pre_tool_use`: Calls `protect-config.ps1` (or `protect-config.sh` on POSIX) to abort any tool execution targeting paths outside the repository.
-- `post_tool_use`: Calls `rtk-filter.ps1` (or `rtk-filter.sh` on POSIX) to compress terminal output if `rtk` is available.
-- `session_start`: Calls `session-start.ps1` to verify the runtime environment.
+Every hook now calls the cross-platform Node dispatcher
+`scripts/hooks/run-hook.mjs`, so the same command string works on Windows,
+macOS and Linux:
+
+- `PreToolUse`: `protect-config` aborts any tool execution targeting paths outside the repository (exit code 1).
+- `PostToolUse`: `rtk-filter` compresses terminal output if `rtk` is available, otherwise passes it through untouched.
+- `SessionStart`: `session-start` prints the runtime readiness summary.
+
+Codex also reads custom prompts from `.codex/prompts/` — the 8 slash commands
+are distributed there from `.agents/commands/`.
 
 ## 5. Verification
 

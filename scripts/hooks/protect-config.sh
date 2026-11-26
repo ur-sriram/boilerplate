@@ -1,25 +1,47 @@
 #!/usr/bin/env sh
 # PreToolUse Guardrail Hook for POSIX environments (Linux / macOS).
 # Blocks file modification or creation outside project root.
+#
+# Path resolution contract (both sides must agree or every write is blocked):
+#   - PROJECT_ROOT is resolved PHYSICALLY (pwd -P), so a checkout that lives
+#     behind a symlink (/workspace -> /run/csi/..., /tmp -> /private/tmp on
+#     macOS) still compares equal to the physically-resolved target.
+#   - The target is resolved with `realpath -m` (physical), matching the root.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
 
 TARGET_PATH="$1"
 
 # If no argument, attempt to read from stdin
 if [ -z "$TARGET_PATH" ] && [ ! -t 0 ]; then
     INPUT_PAYLOAD=$(cat)
-    # Extract path from JSON if python3 is available
+    # Extract path from JSON if python3 is available.
+    # NOTE: the key set must match the PowerShell twin exactly:
+    #       path | file | target | target_path | filePath | params.*
     if command -v python3 >/dev/null 2>&1; then
         TARGET_PATH=$(python3 -c "
 import sys, json
 try:
     data = json.loads('''$INPUT_PAYLOAD''')
-    path = data.get('path') or data.get('file') or data.get('target') or (data.get('params') or {}).get('path')
-    if path: print(path)
+    if not isinstance(data, dict):
+        raise ValueError
+    params = data.get('params') or {}
+    if not isinstance(params, dict):
+        params = {}
+    for key in ('path', 'file', 'target', 'target_path', 'filePath'):
+        value = data.get(key)
+        if value:
+            print(value)
+            break
+    else:
+        for key in ('path', 'file', 'target', 'target_path', 'filePath'):
+            value = params.get(key)
+            if value:
+                print(value)
+                break
 except Exception:
     pass
 " 2>/dev/null || true)
@@ -58,15 +80,15 @@ case "$TARGET_PATH" in
         ;;
 esac
 
-# Resolve absolute path of target
+# Resolve absolute path of target (physical, matching PROJECT_ROOT)
 if command -v realpath >/dev/null 2>&1; then
     RESOLVED_TARGET=$(realpath -m "$TARGET_PATH" 2>/dev/null || true)
 elif command -v python3 >/dev/null 2>&1; then
-    RESOLVED_TARGET=$(python3 -c "import os, sys; print(os.path.abspath(sys.argv[1]))" "$TARGET_PATH" 2>/dev/null || true)
+    RESOLVED_TARGET=$(python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$TARGET_PATH" 2>/dev/null || true)
 else
     case "$TARGET_PATH" in
         /*) RESOLVED_TARGET="$TARGET_PATH" ;;
-        *)  RESOLVED_TARGET="$PROJECT_ROOT/$TARGET_PATH" ;;
+        *) RESOLVED_TARGET="$PROJECT_ROOT/$TARGET_PATH" ;;
     esac
 fi
 

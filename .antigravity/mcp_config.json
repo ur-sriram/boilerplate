@@ -1,49 +1,47 @@
 {
-    "mcpServers":  {
-                       "graphify":  {
-                                        "command":  "uvx",
-                                        "args":  [
-                                                     "--from",
-                                                     "graphifyy",
-                                                     "graphify-mcp"
-                                                 ],
-                                        "disabled":  false,
-                                        "autoApprove":  [
-                                                            "search_graph",
-                                                            "trace_path",
-                                                            "get_code_snippet",
-                                                            "query_graph",
-                                                            "get_architecture"
-                                                        ]
-                                    },
-                       "ui-registry":  {
-                                           "command":  "npx",
-                                           "args":  [
-                                                        "-y",
-                                                        "ui-registry-mcp@0.7.1"
-                                                    ],
-                                           "disabled":  true,
-                                           "autoApprove":  [
-                                                               "list_registries",
-                                                               "search_components",
-                                                               "get_component",
-                                                               "compare_components",
-                                                               "check_consistency"
-                                                           ]
-                                       },
-                       "headroom":  {
-                                        "command":  "uvx",
-                                        "args":  [
-                                                     "--from",
-                                                     "headroom-ai[mcp]",
-                                                     "headroom",
-                                                     "mcp",
-                                                     "serve"
-                                                 ],
-                                        "disabled":  true,
-                                        "autoApprove":  [
-
-                                                        ]
-                                    }
-                   }
+  "mcpServers": {
+    "graphify": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "graphifyy",
+        "graphify-mcp"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "search_graph",
+        "trace_path",
+        "get_code_snippet",
+        "query_graph",
+        "get_architecture"
+      ]
+    },
+    "ui-registry": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "ui-registry-mcp@0.7.1"
+      ],
+      "disabled": true,
+      "autoApprove": [
+        "list_registries",
+        "search_components",
+        "get_component",
+        "compare_components",
+        "check_consistency"
+      ]
+    },
+    "headroom": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "headroom-ai[mcp]",
+        "headroom",
+        "mcp",
+        "serve"
+      ],
+      "disabled": true,
+      "autoApprove": []
+    }
+  }
 }

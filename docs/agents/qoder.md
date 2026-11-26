@@ -4,7 +4,7 @@ This guide details configuration, rules wiring, directory junctions, and lifecyc
 
 ## 1. Overview & Project Scoping
 
-Qoder reads local project settings from `.qoder/settings.json`. All operational rules, skill definitions, and MCP configurations are maintained strictly within the project boundary. No global modifications to `~/.qoder` or system registries are made.
+Qoder reads local project settings from `.qoder/settings.json`. All operational rules, skill definitions, and all three MCP server configurations are maintained strictly within the project boundary. No global modifications to `~/.qoder` or system registries are made.
 
 ## 2. Configuration (`.qoder/settings.json`)
 

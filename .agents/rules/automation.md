@@ -12,10 +12,18 @@ All lifecycle hooks reside in [`scripts/hooks/`](../../scripts/hooks/) and are i
 
 ```
 scripts/hooks/
+├── run-hook.mjs              ──▶ Cross-platform dispatcher (Node): one command string for every OS
 ├── protect-config.ps1 / .sh  ──▶ PreToolUse: Intercepts & blocks out-of-scope filesystem writes
 ├── rtk-filter.ps1 / .sh      ──▶ PostToolUse: Compresses terminal outputs via rtk (60-90% savings)
 └── session-start.ps1 / .sh   ──▶ SessionStart: Validates repository prerequisites and invariants
 ```
+
+**Use `run-hook.mjs` when wiring hooks into an agent.** Every adapter except
+Antigravity used to invoke `powershell -File ...ps1`, so on Linux/macOS — the
+platform this repository's own README targets — no guardrail ran at all.
+`run-hook.mjs` implements the same contract in Node.js and is referenced by
+Claude Code, Codex, Qoder and Goose. Antigravity keeps its `.ps1`/`.sh` pair
+because it supports a POSIX-specific command field.
 
 ### Hook Contract & Operational Behavior
 
@@ -32,8 +40,20 @@ scripts/hooks/
 To prevent context bloat from always-loaded MCP tool schemas, agents switch tool profiles dynamically via [`scripts/mcp-profile.ps1`](../../scripts/mcp-profile.ps1) and `scripts/mcp-profile.sh`:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File ./scripts/mcp-profile.ps1 -Profile <core|ui|compression|all>
+# POSIX
+./scripts/mcp-profile.sh <core|ui|compression|all>
+./scripts/mcp-profile.sh --status
+
+# Windows PowerShell
+powershell -ExecutionPolicy Bypass -File ./scripts/mcp-profile.ps1 <core|ui|compression|all>
 ```
+
+The switcher has a **single implementation** (`scripts/mcp-profile.py`) with
+thin `.sh`/`.ps1` wrappers, and it updates **all nine** adapter MCP configs
+(`.mcp.json`, `.agents/mcp.json`, `.cursor/mcp.json`, `opencode.json`,
+`.antigravity/mcp_config.json`, `.qoder/settings.json`, `.kimi-code/mcp.json`,
+`.goose/config.yaml`, `.codex/config.toml`). The previous inline scripts only
+updated two of them, so the profiles silently disagreed.
 
 | Profile Name | Active MCP Servers | Approximate Context Overhead | Primary Use Case |
 |---|---|---|---|
@@ -46,7 +66,7 @@ powershell -ExecutionPolicy Bypass -File ./scripts/mcp-profile.ps1 -Profile <cor
 
 ## 3. Programmatic Verification Suite
 
-Quality and boundary enforcement are verified programmatically from scratch without third-party frameworks. The master test suite is invoked via [`verify-all.cmd`](../../verify-all.cmd) or `scripts/verify-all.ps1`:
+Quality and boundary enforcement are verified programmatically from scratch without third-party frameworks. The master test suite is invoked via [`verify-all.cmd`](../../verify-all.cmd), `scripts/verify-all.ps1` or `scripts/verify-all.sh`, and runs **nine** suites:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -70,7 +90,7 @@ Quality and boundary enforcement are verified programmatically from scratch with
 ```
 
 1. **`verify-tools.{ps1,sh}`**: Asserts availability of Git, Node.js, Python, PowerShell, and tests executable resolution for configured MCP tools.
-2. **`verify-scripts.{ps1,sh}`**: Performs AST parsing and syntax validation of all `.ps1`, `.sh`, and `.py` files in `scripts/`, `scripts/hooks/`, and `.specify/`.
+2. **`verify-scripts.{ps1,sh}`**: Performs AST parsing and syntax validation of all `.ps1`, `.sh`, and `.py` files in `scripts/`, `scripts/hooks/`, and `.specify/`, plus hook dry-runs (the guardrail must ALLOW an in-scope target and BLOCK an out-of-scope one).
 3. **`verify-links.py`**: Multi-stage code-block aware parser validating that 100% of internal Markdown links, relative paths, and GitHub anchor slugs resolve cleanly.
 4. **`test-bootstrap.{ps1,sh}`**: Clones repository into an isolated sandbox temp directory, runs the bootstrap sequence, and programmatically verifies:
    - Zero files created or modified outside the sandbox.

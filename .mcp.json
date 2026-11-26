@@ -7,7 +7,8 @@
         "graphifyy",
         "graphify-mcp"
       ],
-      "description": "Codebase AST knowledge graph server for structural exploration"
+      "description": "Codebase AST knowledge graph server for structural exploration",
+      "disabled": false
     },
     "ui-registry": {
       "command": "npx",
@@ -15,7 +16,8 @@
         "-y",
         "ui-registry-mcp@0.7.1"
       ],
-      "description": "Component discovery MCP server across 12 shadcn-style registries"
+      "disabled": true,
+      "description": "Component discovery MCP server across 12 shadcn-style registries (ui profile)"
     },
     "headroom": {
       "command": "uvx",
@@ -26,7 +28,8 @@
         "mcp",
         "serve"
       ],
-      "description": "Dynamic context compression engine for massive payloads"
+      "disabled": true,
+      "description": "Dynamic context compression engine (compression profile)"
     }
   }
 }

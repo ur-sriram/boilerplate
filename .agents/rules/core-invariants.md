@@ -8,11 +8,11 @@ This document defines the absolute, non-negotiable operational invariants govern
 
 ## 1. Strict Project Scoping & Zero Global Pollution
 
-1. **Working Directory Lockdown**: All reads, writes, and modifications must strictly target paths within the project root (`c:\sriram\boilerplate`).
+1. **Working Directory Lockdown**: All reads, writes, and modifications must strictly target paths within the project root (the directory that contains this rule file).
 2. **Global Paths Forbidden**: Modifying, creating, or inspecting files outside the project boundary is strictly prohibited:
    - Prohibited paths: `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, `~/.claude`, `/etc`, or global package registries (`%APPDATA%\npm`, `~/.cargo/bin`).
    - Any agent configuration workarounds required by third-party tooling must be recorded in [THIRD_PARTY.md](../../THIRD_PARTY.md) as a named exception.
-3. **Automated Guardrail Enforcement**: Tool calls attempting to access paths outside the project root are intercepted and blocked by the PreToolUse hook (`scripts/hooks/protect-config.ps1` and `scripts/hooks/protect-config.sh`), which aborts with exit code 1.
+3. **Automated Guardrail Enforcement**: Tool calls attempting to access paths outside the project root are intercepted and blocked by the PreToolUse hook, which aborts with exit code 1. The hook is invoked through the cross-platform dispatcher `scripts/hooks/run-hook.mjs` (Claude Code, Codex, Qoder, Goose), through `.antigravity/hooks.json` (Antigravity), or through the OpenCode `config-protection.js` plugin. Runtimes without a hook API (Cursor, Cline, Windsurf, Copilot, Kimi, Junie) rely on this rule at the prompt level — do not assume the block is enforced there.
 
 ---
 

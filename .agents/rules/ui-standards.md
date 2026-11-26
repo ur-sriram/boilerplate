@@ -18,6 +18,14 @@ flowchart LR
 ```
 
 ### Step 1: Component Sourcing (Zero-Scratch Mandate)
+
+> **Framework note**: `ui-registry-mcp`, the shadcn CLI and Astryx emit
+> **React** components. This boilerplate is framework-agnostic TypeScript and
+> does not depend on React. In a React project, install them as-is. In a
+> non-React project, search the registries for the design source, then adapt
+> the markup and styling to the local framework — the "zero-scratch" rule
+> still applies (do not invent a component from nothing), but do not add
+> React to a non-React project.
 - **Rule**: DO NOT author UI components from scratch.
 - **Action**:
   1. Search for existing accessible component primitives and templates across:

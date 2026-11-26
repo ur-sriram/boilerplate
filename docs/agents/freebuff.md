@@ -30,7 +30,7 @@ This is cataloged as a named exception in `THIRD_PARTY.md` and included in `.env
 Freebuff does not possess a native lifecycle shell hook system (such as PreToolUse shell command interception). To ensure equivalent security and quality guarantees:
 
 1. **Scoping Guardrail**: Translated into an explicit prompt rule in `AGENTS.md` and `.agents/rules/core-invariants.md`:
-   - *"Strict Project Scoping: NEVER modify files outside c:\sriram\boilerplate. Writes to %USERPROFILE%, %APPDATA%, ~/.config, ~/.gemini, or ~/.claude are forbidden."*
+   - *"Strict Project Scoping: NEVER modify files outside the project root. Writes to %USERPROFILE%, %APPDATA%, ~/.config, ~/.gemini, or ~/.claude are forbidden."*
 2. **Terminal Output Compression**: Freebuff uses native token management; the `rtk` compressor is bypassed in favor of direct prompt-level concise output guidelines.
 3. **Session Start Verification**: Freebuff agents are instructed via `AGENTS.md` to run `verify-all.cmd` (or `./scripts/verify-all.sh`) upon first being initialized in a repository.
 

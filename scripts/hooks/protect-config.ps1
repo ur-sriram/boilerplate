@@ -27,6 +27,39 @@ $ErrorActionPreference = 'Stop'
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir "..\.."))
 
+# Resolve a path to its physical location (following symlinks/junctions).
+# Returns $null when the path cannot be resolved, so callers can fall back
+# to lexical comparison. Mirrors the POSIX twin's `realpath -m` behaviour:
+# both the project root and the target must be compared in the same space,
+# otherwise a checkout behind a symlink blocks every legitimate write.
+function Resolve-PhysicalPath {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    try {
+        $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop
+
+        # PowerShell 7.1+: ResolvedTarget is the definitive physical target.
+        if ($item.PSObject.Properties['ResolvedTarget'] -and $item.ResolvedTarget) {
+            return $item.ResolvedTarget.FullName
+        }
+
+        # Windows PowerShell 5.1: ReparsePoint target is exposed via .Target.
+        if ($item.PSObject.Properties['Target'] -and $item.Target) {
+            $target = @($item.Target)[0]
+            if ($target -is [string]) {
+                if (-not [System.IO.Path]::IsPathRooted($target)) {
+                    $target = Join-Path (Split-Path -Parent $item.FullName) $target
+                }
+                return [System.IO.Path]::GetFullPath($target)
+            }
+        }
+
+        return $item.FullName
+    } catch {
+        return $null
+    }
+}
+
 # Read from pipeline if TargetPath is not provided
 if ([string]::IsNullOrWhiteSpace($TargetPath) -and [string]::IsNullOrWhiteSpace($InputPayload)) {
     if ($Input) {
@@ -40,14 +73,24 @@ if (-not [string]::IsNullOrWhiteSpace($InputPayload)) {
         $parsed = $InputPayload | ConvertFrom-Json -ErrorAction SilentlyContinue
         if ($parsed) {
             if (-not $TargetPath) {
-                if ($parsed.path) { $TargetPath = $parsed.path }
-                elseif ($parsed.file) { $TargetPath = $parsed.file }
-                elseif ($parsed.target) { $TargetPath = $parsed.target }
-                elseif ($parsed.filePath) { $TargetPath = $parsed.filePath }
-                elseif ($parsed.params) {
-                    if ($parsed.params.path) { $TargetPath = $parsed.params.path }
-                    elseif ($parsed.params.file) { $TargetPath = $parsed.params.file }
-                    elseif ($parsed.params.target) { $TargetPath = $parsed.params.target }
+                # Key set MUST match the POSIX twin (protect-config.sh) exactly:
+                #   path | file | target | target_path | filePath | params.*
+                # Missing 'target_path' here is what caused the Claude Code hook
+                # payload to fall through to the raw-blob branch and block
+                # legitimate in-scope writes.
+                foreach ($key in @('path', 'file', 'target', 'target_path', 'filePath')) {
+                    if ($parsed.PSObject.Properties[$key] -and $parsed.$key) {
+                        $TargetPath = $parsed.$key
+                        break
+                    }
+                }
+                if (-not $TargetPath -and $parsed.params) {
+                    foreach ($key in @('path', 'file', 'target', 'target_path', 'filePath')) {
+                        if ($parsed.params.PSObject.Properties[$key] -and $parsed.params.$key) {
+                            $TargetPath = $parsed.params.$key
+                            break
+                        }
+                    }
                 }
             }
             if (-not $ToolName) {
@@ -101,10 +144,20 @@ try {
     exit 1
 }
 
-# Check if target is strictly within ProjectRoot
+# Physical (symlink-resolved) forms of root and target. When both are
+# available they must agree, otherwise compare lexically.
+$PhysicalRoot = Resolve-PhysicalPath -Path $ProjectRoot
+$PhysicalTarget = Resolve-PhysicalPath -Path $ResolvedTarget
+
 $ProjectRootWithSlash = $ProjectRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
 $IsInsideProject = $ResolvedTarget.StartsWith($ProjectRootWithSlash, [System.StringComparison]::OrdinalIgnoreCase) -or
                    ($ResolvedTarget.Equals($ProjectRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar), [System.StringComparison]::OrdinalIgnoreCase))
+
+if (-not $IsInsideProject -and $PhysicalRoot -and $PhysicalTarget) {
+    $PhysicalRootWithSlash = $PhysicalRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
+    $IsInsideProject = $PhysicalTarget.StartsWith($PhysicalRootWithSlash, [System.StringComparison]::OrdinalIgnoreCase) -or
+                       ($PhysicalTarget.Equals($PhysicalRoot.TrimEnd([System.IO.Path]::DirectorySeparatorChar), [System.StringComparison]::OrdinalIgnoreCase))
+}
 
 # Check for forbidden sensitive directories
 $AppData = [Environment]::GetFolderPath('ApplicationData')
