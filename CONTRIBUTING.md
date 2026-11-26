@@ -135,8 +135,9 @@ Then write `feature.test.ts` first. Each feature folder holds `feature.ts`,
    `npm run lint` and `npm run typecheck`.
 4. **Open the PR** with a short description of *what* changed and *why*. Link
    the issue it fixes (`Fixes #123`).
-5. **CI must be green.** The workflow runs the same 10 suites you ran locally,
-   on Linux and on Windows.
+5. **The checks must be green.** Run `./scripts/verify-all.sh`, `npm test`,
+   `npm run lint` and `npm run typecheck` — these are exactly the commands the
+   GitHub Actions workflow runs, on Linux and on Windows.
 6. **Respond to review.** Push follow-up commits rather than force-pushing once
    review has started.
 
