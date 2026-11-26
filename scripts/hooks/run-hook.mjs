@@ -12,6 +12,7 @@
  *     node ./scripts/hooks/run-hook.mjs protect-config
  *     node ./scripts/hooks/run-hook.mjs rtk-filter
  *     node ./scripts/hooks/run-hook.mjs session-start
+ *     node ./scripts/hooks/run-hook.mjs memory-sync
  *
  * The .ps1/.sh twins remain the reference implementations and are still used
  * by Antigravity (which supports a POSIX-specific command field).
@@ -20,6 +21,7 @@
  *   protect-config : 0 = allowed, 1 = blocked (outside project root)
  *   rtk-filter     : 0 = always (pass-through fallback is guaranteed)
  *   session-start  : 0 = always (diagnostic only)
+ *   memory-sync    : 0 = always (recalled episodes are advisory)
  */
 
 import { spawnSync } from 'node:child_process';
@@ -192,11 +194,45 @@ function hookSessionStart() {
 }
 
 // ---------------------------------------------------------------------------
+// memory-sync (SessionStart)
+// ---------------------------------------------------------------------------
+
+/**
+ * Recall the project's episodic memory.
+ *
+ * The store itself lives in src/features/claude-mem/ and is exercised by the
+ * unit tests there; this hook only invokes its CLI so that the same code
+ * path is used by agents, by the POSIX/PowerShell twins and by the tests.
+ */
+function hookMemorySync() {
+  const cli = path.join(REPO_ROOT, 'src', 'features', 'claude-mem', 'cli.ts');
+  const result = spawnSync(
+    process.execPath,
+    [cli, 'sync', '--root', REPO_ROOT],
+    {
+      encoding: 'utf8',
+      timeout: 10000,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  );
+
+  if (result.status === 0) {
+    if (result.stdout) process.stdout.write(result.stdout);
+    return 0;
+  }
+
+  // A memory hook must never break the session it runs in.
+  process.stderr.write('[MEMORY] claude-mem sync unavailable; continuing without recall\n');
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
 
 const HOOKS = {
   'protect-config': hookProtectConfig,
   'rtk-filter': hookRtkFilter,
   'session-start': hookSessionStart,
+  'memory-sync': hookMemorySync,
 };
 
 const hookName = process.argv[2];

@@ -224,6 +224,21 @@ if (Test-Path -LiteralPath $hooksDir) {
             $totalErrors++
         }
     }
+
+    # 4d. Claude-mem episodic memory hook check.
+    # The hook used to be a mkdir+echo stub that no adapter ever registered,
+    # so it passed every check while persisting nothing. It is now exercised
+    # for real: it must recall the episodic store without failing.
+    $memoryHook = Join-Path $hooksDir "memory-sync.ps1"
+    if (Test-Path -LiteralPath $memoryHook) {
+        $memoryOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File $memoryHook 2>&1
+        if ($LASTEXITCODE -eq 0 -and ($memoryOutput -join "`n") -match "\[MEMORY\]") {
+            Write-Host "[PASS] memory-sync.ps1 recalled the episodic store" -ForegroundColor Green
+        } else {
+            Write-Host "[FAIL] memory-sync.ps1 did not report the episodic store" -ForegroundColor Red
+            $totalErrors++
+        }
+    }
 }
 
 Write-Host "`n============================================================" -ForegroundColor Cyan

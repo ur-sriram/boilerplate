@@ -373,7 +373,67 @@ else:
 fi
 
 # ----------------------------------------------------------------------
-# 9. Teardown Sandbox & Exit
+# 9. Assertion 6: claude-mem Episodic Memory Is Wired, Not Just Described
+# ----------------------------------------------------------------------
+echo ""
+echo "--- Assertion 6: claude-mem Episodic Memory Round-Trip + Hook Wiring ---"
+MEMORY_REPO="${SANDBOX_DIR}/repo"
+
+if [ -f "${MEMORY_REPO}/src/features/claude-mem/cli.ts" ]; then
+    MEMORY_CLI="${MEMORY_REPO}/src/features/claude-mem/cli.ts"
+
+    if node "${MEMORY_CLI}" remember --kind fact \
+        --title "Bootstrap probe episode" \
+        --body "The episodic store round-trips inside the sandbox." \
+        --tags bootstrap \
+        --root "${MEMORY_REPO}" >/dev/null 2>&1; then
+        echo "[PASS] claude-mem wrote an episode into the sandbox store."
+    else
+        echo "[FAIL] claude-mem could not write an episode."
+        TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+    fi
+
+    RECALL_OUT="$(node "${MEMORY_CLI}" recall --text "Bootstrap probe" --root "${MEMORY_REPO}" 2>&1 || true)"
+    if echo "${RECALL_OUT}" | grep -q "Bootstrap probe episode"; then
+        echo "[PASS] claude-mem recalled the episode it wrote."
+    else
+        echo "[FAIL] claude-mem did not recall the episode it wrote."
+        TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+    fi
+
+    # The store must stay inside the sandbox (the only sanctioned write
+    # outside a project root).
+    if [ -f "${MEMORY_REPO}/.agents/memory/episodes.jsonl" ]; then
+        echo "[PASS] claude-mem store lives inside the project root (.agents/memory/)."
+    else
+        echo "[FAIL] claude-mem store missing at .agents/memory/episodes.jsonl."
+        TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+    fi
+else
+    echo "[FAIL] claude-mem CLI missing in sandbox repo."
+    TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+fi
+
+HOOK_WIRING_MISSING=""
+for cfg in ".claude/settings.json" ".codex/config.toml" ".goose/hooks.json" \
+           ".qoder/settings.json" ".antigravity/hooks.json"; do
+    if [ -f "${MEMORY_REPO}/${cfg}" ] && ! grep -q "memory-sync" "${MEMORY_REPO}/${cfg}"; then
+        HOOK_WIRING_MISSING="${HOOK_WIRING_MISSING} ${cfg}"
+    fi
+done
+if [ ! -f "${MEMORY_REPO}/.opencode/plugins/memory-sync.js" ]; then
+    HOOK_WIRING_MISSING="${HOOK_WIRING_MISSING} .opencode/plugins/memory-sync.js"
+fi
+
+if [ -z "${HOOK_WIRING_MISSING}" ]; then
+    echo "[PASS] memory-sync hook registered in every hook-capable adapter."
+else
+    echo "[FAIL] memory-sync hook not wired in:${HOOK_WIRING_MISSING}"
+    TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+fi
+
+# ----------------------------------------------------------------------
+# 10. Teardown Sandbox & Exit
 # ----------------------------------------------------------------------
 echo ""
 echo "[INFO] Cleaning up sandbox directory: ${SANDBOX_DIR}"

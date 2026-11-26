@@ -30,6 +30,9 @@ hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs rtk-fi
 
 [[hooks.SessionStart]]
 hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs session-start" }]
+
+[[hooks.SessionStart]]
+hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs memory-sync" }]
 ```
 
 ## 3. Single Canonical Skill Store & Directory Junctions
@@ -61,7 +64,8 @@ macOS and Linux:
 
 - `PreToolUse`: `protect-config` aborts any tool execution targeting paths outside the repository (exit code 1).
 - `PostToolUse`: `rtk-filter` compresses terminal output if `rtk` is available, otherwise passes it through untouched.
-- `SessionStart`: `session-start` prints the runtime readiness summary.
+- `SessionStart`: `session-start` prints the runtime readiness summary;
+  `memory-sync` recalls the project's episodic memory (claude-mem).
 
 Codex also reads custom prompts from `.codex/prompts/` — the 8 slash commands
 are distributed there from `.agents/commands/`.

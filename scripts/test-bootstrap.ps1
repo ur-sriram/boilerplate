@@ -372,6 +372,73 @@ if (-not (Test-Path -LiteralPath $aiIgnorePath)) {
 }
 
 # ----------------------------------------------------------------------
+# Assertion 6: claude-mem Episodic Memory Is Wired, Not Just Described
+# ----------------------------------------------------------------------
+Write-Host "`n--- Assertion 6: claude-mem Episodic Memory Round-Trip + Hook Wiring ---" -ForegroundColor Cyan
+$memoryCli = Join-Path $SandboxDir "src\features\claude-mem\cli.ts"
+
+if (-not (Test-Path -LiteralPath $memoryCli)) {
+    Write-Host "[FAIL] claude-mem CLI missing in sandbox: $memoryCli" -ForegroundColor Red
+    $TotalErrors++
+} else {
+    & node $memoryCli remember --kind fact `
+        --title "Bootstrap probe episode" `
+        --body "The episodic store round-trips inside the sandbox." `
+        --tags bootstrap `
+        --root $SandboxDir | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "[PASS] claude-mem wrote an episode into the sandbox store." -ForegroundColor Green
+    } else {
+        Write-Host "[FAIL] claude-mem could not write an episode." -ForegroundColor Red
+        $TotalErrors++
+    }
+
+    $recallOut = & node $memoryCli recall --text "Bootstrap probe" --root $SandboxDir 2>&1
+    if (($recallOut -join "`n") -match "Bootstrap probe episode") {
+        Write-Host "[PASS] claude-mem recalled the episode it wrote." -ForegroundColor Green
+    } else {
+        Write-Host "[FAIL] claude-mem did not recall the episode it wrote." -ForegroundColor Red
+        $TotalErrors++
+    }
+
+    # The store must stay inside the sandbox (the only sanctioned write
+    # outside a project root).
+    $memoryStore = Join-Path $SandboxDir ".agents\memory\episodes.jsonl"
+    if (Test-Path -LiteralPath $memoryStore) {
+        Write-Host "[PASS] claude-mem store lives inside the project root (.agents\memory\)." -ForegroundColor Green
+    } else {
+        Write-Host "[FAIL] claude-mem store missing at .agents\memory\episodes.jsonl." -ForegroundColor Red
+        $TotalErrors++
+    }
+}
+
+$unwiredMemory = @()
+foreach ($cfg in @(".claude\settings.json", ".codex\config.toml", ".goose\hooks.json",
+                    ".qoder\settings.json", ".antigravity\hooks.json")) {
+    $cfgPath = Join-Path $SandboxDir $cfg
+    if (Test-Path -LiteralPath $cfgPath) {
+        $cfgText = Get-Content -LiteralPath $cfgPath -Raw
+        if ($cfgText -notmatch "memory-sync") {
+            $unwiredMemory += $cfg
+        }
+    }
+}
+$openCodeMemory = Join-Path $SandboxDir ".opencode\plugins\memory-sync.js"
+if (-not (Test-Path -LiteralPath $openCodeMemory)) {
+    $unwiredMemory += ".opencode\plugins\memory-sync.js"
+}
+
+if ($unwiredMemory.Count -eq 0) {
+    Write-Host "[PASS] memory-sync hook registered in every hook-capable adapter." -ForegroundColor Green
+} else {
+    Write-Host "[FAIL] memory-sync hook not wired in:" -ForegroundColor Red
+    foreach ($m in $unwiredMemory) {
+        Write-Host "       - $m" -ForegroundColor Red
+    }
+    $TotalErrors++
+}
+
+# ----------------------------------------------------------------------
 # Teardown & Exit
 # ----------------------------------------------------------------------
 if (-not $KeepTemp) {

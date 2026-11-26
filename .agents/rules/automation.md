@@ -15,7 +15,8 @@ scripts/hooks/
 ├── run-hook.mjs              ──▶ Cross-platform dispatcher (Node): one command string for every OS
 ├── protect-config.ps1 / .sh  ──▶ PreToolUse: Intercepts & blocks out-of-scope filesystem writes
 ├── rtk-filter.ps1 / .sh      ──▶ PostToolUse: Compresses terminal outputs via rtk (60-90% savings)
-└── session-start.ps1 / .sh   ──▶ SessionStart: Validates repository prerequisites and invariants
+├── session-start.ps1 / .sh   ──▶ SessionStart: Validates repository prerequisites and invariants
+└── memory-sync.ps1 / .sh     ──▶ SessionStart: Recalls the claude-mem episodic memory store
 ```
 
 **Use `run-hook.mjs` when wiring hooks into an agent.** Every adapter except
@@ -32,6 +33,7 @@ because it supports a POSIX-specific command field.
 | `protect-config.{ps1,sh}` | PreToolUse | Tool invocation parameters (`target_path`) | Validates `target_path` against project root. Blocks access to `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, `~/.claude`.<br>**Exit 0**: Allowed.<br>**Exit 1**: Access denied with `[GUARDRAIL]` error. |
 | `rtk-filter.{ps1,sh}` | PostToolUse | Raw stdout / stderr stream from terminal commands | Probes for `rtk` binary in `PATH`. If present, applies token compression (60–90% reduction). If absent, passes raw output through unmodified.<br>**Exit 0**: Guaranteed non-crashing passthrough. |
 | `session-start.{ps1,sh}` | SessionStart | None | Asserts Git cleanliness, verifies `.env` presence/safety, checks runtime tools, prints statusline summary.<br>**Exit 0**: Ready. |
+| `memory-sync.{ps1,sh}` | SessionStart | None | Invokes the `claude-mem` CLI (`src/features/claude-mem/cli.ts`) to recall the episodic memory store in `.agents/memory/`. Credentials are scrubbed on write; the store never leaves the project root.<br>**Exit 0**: Recalled (or skipped — a missing store never fails a session). |
 
 ---
 
@@ -118,6 +120,9 @@ Quality and boundary enforcement are verified programmatically from scratch with
    - `AGENTS.md` is present and valid as the universal core index.
    - 100% of skills in `.agents/skills/` are linked in rule files.
    - Additional hooks (`session-catchup.py`, `memory-sync.{ps1,sh}`), `claude-mem`, and `ponytail` / `headroom` / `rtk` integrations are validated.
+   - The `claude-mem` episodic store round-trips inside the sandbox (write an
+     episode, recall it) and the `memory-sync` hook is registered in every
+     hook-capable adapter.
 
 ### 3.1 Runtime MCP Verification (on demand)
 

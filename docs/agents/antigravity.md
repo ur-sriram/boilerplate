@@ -65,6 +65,12 @@ Antigravity executes cross-platform lifecycle hooks defined in `.antigravity/hoo
       "posix_command": "sh ./scripts/hooks/session-start.sh",
       "timeout_ms": 10000,
       "on_failure": "warn"
+    },
+    "MemorySync": {
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/memory-sync.ps1",
+      "posix_command": "sh ./scripts/hooks/memory-sync.sh",
+      "timeout_ms": 10000,
+      "on_failure": "warn"
     }
   }
 }
@@ -73,6 +79,7 @@ Antigravity executes cross-platform lifecycle hooks defined in `.antigravity/hoo
 - **PreToolUse**: Validates target paths before write operations. Blocks any attempt to access or modify paths outside the repository.
 - **PostToolUse**: Pipes verbose terminal output through `rtk filter` to reduce token overhead, gracefully echoing raw logs if `rtk` is missing.
 - **SessionStart**: Audits local prerequisites (Git, Node, Python, PowerShell/Bash) and prints an environment status summary.
+- **MemorySync**: Recalls the project's episodic memory (claude-mem) so the session starts with previously recorded decisions.
 
 ## 4. Native Stdio MCP Mappings (`.antigravity/mcp_config.json`)
 

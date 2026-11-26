@@ -28,8 +28,10 @@ Qoder reads local project settings from `.qoder/settings.json`. All operational 
     }
   },
   "hooks": {
-    "PreToolUse": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1",
-    "SessionStart": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1"
+    "PreToolUse": "node ./scripts/hooks/run-hook.mjs protect-config",
+    "PostToolUse": "node ./scripts/hooks/run-hook.mjs rtk-filter",
+    "SessionStart": "node ./scripts/hooks/run-hook.mjs session-start",
+    "MemorySync": "node ./scripts/hooks/run-hook.mjs memory-sync"
   }
 }
 ```
@@ -56,7 +58,7 @@ Qoder looks for skills in `.qoder/skills/`. To maintain a single canonical sourc
 
 ## 5. Hook Guardrails
 
-Qoder invokes `scripts/hooks/protect-config.ps1` before executing tools to prevent accidental writes outside the repository root, and runs `scripts/hooks/session-start.ps1` on session launch.
+Qoder invokes the `protect-config` hook before executing tools to prevent accidental writes outside the repository root, runs `session-start` on session launch, and runs `memory-sync` to recall the project's episodic memory (claude-mem).
 
 ## 6. Verification
 

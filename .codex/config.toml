@@ -46,3 +46,8 @@ hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs rtk-fi
 
 [[hooks.SessionStart]]
 hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs session-start" }]
+
+# Recall the project's cross-session episodic memory (claude-mem). Advisory:
+# a missing store never fails the session.
+[[hooks.SessionStart]]
+hooks = [{ type = "command", command = "node ./scripts/hooks/run-hook.mjs memory-sync" }]

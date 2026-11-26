@@ -89,6 +89,10 @@ OpenCode executes vanilla ECMAScript modules directly via Node.js without requir
    - On a session event, prints the readiness summary: project root, resolved paths for `git`, `node`, `python3` and `sh`, whether `rtk` is present, and whether the canonical skills store exists.
    - Mirrors `scripts/hooks/session-start.sh`.
 
+6. **Memory Sync Plugin (`.opencode/plugins/memory-sync.js`)**:
+   - On a session event, recalls the project's episodic memory (claude-mem) and prints the stored episodes as session context.
+   - Mirrors `scripts/hooks/memory-sync.sh`; invokes the same CLI, so the recalled episodes match the other adapters exactly.
+
 ## 4. Custom Slash Commands
 
 OpenCode automatically discovers TOML command manifests located in `.opencode/commands/`:
@@ -144,6 +148,7 @@ logic so the two paths cannot drift.
 | `ponytail-compactor.js` | `tool.execute.before` | Blocks writes that would push a file past the 400-line ceiling |
 | `rtk-interceptor.js` | `tool.execute.after` | Compresses terminal output through `rtk` (60-90% saving, graceful passthrough) |
 | `session-start.js` | `event` | Prints the session readiness summary |
+| `memory-sync.js` | `event` | Recalls the project's episodic memory (claude-mem) |
 
 ## 5. Dynamic MCP Profile Management
 

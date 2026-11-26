@@ -21,7 +21,8 @@ identically on Windows, macOS and Linux:
 ```json
 "PreToolUse":  [ { "matcher": "Write|Edit|MultiEdit", "hooks": [ { "type": "command", "command": "node ./scripts/hooks/run-hook.mjs protect-config" } ] } ],
 "PostToolUse": [ { "matcher": "Bash",                    "hooks": [ { "type": "command", "command": "node ./scripts/hooks/run-hook.mjs rtk-filter" } ] } ],
-"SessionStart":[ {                                             "hooks": [ { "type": "command", "command": "node ./scripts/hooks/run-hook.mjs session-start" } ] } ]
+"SessionStart":[ {                                             "hooks": [ { "type": "command", "command": "node ./scripts/hooks/run-hook.mjs session-start" } ] },
+               {                                             "hooks": [ { "type": "command", "command": "node ./scripts/hooks/run-hook.mjs memory-sync" } ] } ]
 ```
 
 - `protect-config` blocks any write whose resolved path falls outside the
@@ -30,6 +31,8 @@ identically on Windows, macOS and Linux:
 - `rtk-filter` pipes terminal output through `rtk` when installed and passes
   it through untouched otherwise.
 - `session-start` prints the runtime readiness summary.
+- `memory-sync` recalls the project's episodic memory (claude-mem) so the
+  session starts with the decisions recorded in previous ones.
 
 ## 3. Skills
 
