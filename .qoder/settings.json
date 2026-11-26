@@ -13,11 +13,32 @@
         "--from",
         "graphifyy",
         "graphify-mcp"
-      ]
+      ],
+      "enabled": true
+    },
+    "ui-registry": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "ui-registry-mcp@0.7.1"
+      ],
+      "enabled": false
+    },
+    "headroom": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "headroom-ai[mcp]",
+        "headroom",
+        "mcp",
+        "serve"
+      ],
+      "enabled": false
     }
   },
   "hooks": {
-    "PreToolUse": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/protect-config.ps1",
-    "SessionStart": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1"
+    "PreToolUse": "node ./scripts/hooks/run-hook.mjs protect-config",
+    "PostToolUse": "node ./scripts/hooks/run-hook.mjs rtk-filter",
+    "SessionStart": "node ./scripts/hooks/run-hook.mjs session-start"
   }
 }

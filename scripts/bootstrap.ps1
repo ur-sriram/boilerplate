@@ -41,99 +41,31 @@ foreach ($dir in $SecondaryDirs) {
     }
 }
 
-# 3. Create zero-elevation NTFS Directory Junctions
-$JunctionTargets = @(
-    @{ Path = (Join-Path $ProjectRoot ".codex\skills"); Name = ".codex\skills" },
-    @{ Path = (Join-Path $ProjectRoot ".qoder\skills"); Name = ".qoder\skills" }
-)
-
-foreach ($junc in $JunctionTargets) {
-    $targetPath = $junc.Path
-    $targetName = $junc.Name
-
-    $recreate = $false
-    if (Test-Path -LiteralPath $targetPath) {
-        $item = Get-Item -LiteralPath $targetPath -Force
-        $isReparse = ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0
-        if ($Force -or -not $isReparse) {
-            Write-Host "[INFO] Removing existing link/directory at $targetName..." -ForegroundColor Gray
-            if ($isReparse) {
-                [System.IO.Directory]::Delete($targetPath)
-            } else {
-                Remove-Item -LiteralPath $targetPath -Recurse -Force
-            }
-            $recreate = $true
-        } else {
-            Write-Host "[OK] Existing junction verified at $targetName" -ForegroundColor Green
-            continue
-        }
+# 3. Establish zero-elevation NTFS Directory Junctions for every supported agent.
+#    Delegated to sync-agent-adapters.ps1 so the junction logic lives in ONE place.
+#    The previous inline copy only created .codex and .qoder, which left Claude
+#    Code, Cursor, Windsurf and Cline with zero access to the skill store.
+Write-Host "[INFO] Establishing skill junctions for all supported agents..." -ForegroundColor Cyan
+try {
+    & (Join-Path $ProjectRoot "scripts\sync-agent-adapters.ps1") -ProjectRoot $ProjectRoot
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "[OK] Skill junctions established for all supported agents." -ForegroundColor Green
     } else {
-        $recreate = $true
+        Write-Host "[WARN] Some skill junctions could not be established; run scripts\sync-agent-adapters.ps1 manually." -ForegroundColor Yellow
     }
-
-    if ($recreate) {
-        Write-Host "[INFO] Establishing NTFS Directory Junction: $targetName -> .agents\skills..." -ForegroundColor Cyan
-        $junctionCreated = $false
-
-        # Attempt 1: mklink /J via cmd.exe
-        try {
-            $prevEAP = $ErrorActionPreference
-            $ErrorActionPreference = "SilentlyContinue"
-            $pinfo = New-Object System.Diagnostics.ProcessStartInfo
-            $pinfo.FileName = "cmd.exe"
-            $pinfo.Arguments = "/c mklink /J `"$targetPath`" `"$CanonicalSkillsDir`""
-            $pinfo.RedirectStandardOutput = $true
-            $pinfo.RedirectStandardError = $true
-            $pinfo.UseShellExecute = $false
-            $pinfo.CreateNoWindow = $true
-            $proc = [System.Diagnostics.Process]::Start($pinfo)
-            [void]$proc.WaitForExit(5000)
-            $ErrorActionPreference = $prevEAP
-
-            if ($proc.ExitCode -eq 0 -and (Test-Path -LiteralPath $targetPath)) {
-                $junctionCreated = $true
-            }
-        } catch {
-            $junctionCreated = $false
-        }
-
-        # Attempt 2: New-Item -ItemType Junction if mklink failed
-        if (-not $junctionCreated) {
-            try {
-                $prevEAP = $ErrorActionPreference
-                $ErrorActionPreference = "SilentlyContinue"
-                New-Item -ItemType Junction -Path $targetPath -Target $CanonicalSkillsDir -Force -ErrorAction SilentlyContinue | Out-Null
-                $ErrorActionPreference = $prevEAP
-                if (Test-Path -LiteralPath $targetPath) {
-                    $junctionCreated = $true
-                }
-            } catch {
-                $junctionCreated = $false
-            }
-        }
-
-        if ($junctionCreated) {
-            Write-Host "[OK] Junction established for $targetName" -ForegroundColor Green
-        } else {
-            Write-Host "[WARN] NTFS Junction not permitted in current security context. Falling back to directory mirror..." -ForegroundColor Yellow
-            New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
-            if (Test-Path -LiteralPath $CanonicalSkillsDir) {
-                Copy-Item -Path (Join-Path $CanonicalSkillsDir "*") -Destination $targetPath -Recurse -Force -ErrorAction SilentlyContinue
-            }
-            Write-Host "[OK] Mirrored folder created for $targetName with .gitignore protection" -ForegroundColor Green
-        }
-    }
+} catch {
+    Write-Host "[WARN] Adapter sync failed: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
 # 4. Verify boundary coherence (.gitignore includes secondary agent skills)
 $GitIgnorePath = Join-Path $ProjectRoot ".gitignore"
 if (Test-Path -LiteralPath $GitIgnorePath) {
     $gitIgnoreContent = Get-Content -LiteralPath $GitIgnorePath -Raw
-    $needsCodex = $gitIgnoreContent -notmatch "(?m)^\.codex/skills/?$"
-    $needsQoder = $gitIgnoreContent -notmatch "(?m)^\.qoder/skills/?$"
-    if ($needsCodex -or $needsQoder) {
+    $mirroredSkillDirs = @(".claude/skills/", ".cline/skills/", ".codex/skills/", ".cursor/skills/", ".qoder/skills/", ".windsurf/skills/")
+    $missingDirs = @($mirroredSkillDirs | Where-Object { $gitIgnoreContent -notmatch "(?m)^$([regex]::Escape($_))?$" })
+    if ($missingDirs.Count -gt 0) {
         Write-Host "[INFO] Registering secondary skill directories in .gitignore..." -ForegroundColor Yellow
-        Add-Content -LiteralPath $GitIgnorePath -Value "`n# Secondary Agent Mirrored Skills`n.codex/skills/`n.qoder/skills/"
+        Add-Content -LiteralPath $GitIgnorePath -Value ("`n# Secondary Agent Mirrored Skills`n" + ($missingDirs -join "`n"))
     }
 }
 

@@ -66,10 +66,25 @@ else
 fi
 
 # 5. sync-agent-adapters.sh
-run_suite "5. sync-agent-adapters" "bash '${SCRIPT_DIR}/sync-agent-adapters.sh' --verify-only"
+#    Creates the skill junctions first, then verifies them. Verifying a fresh
+#    clone without creating them always failed (all 6 junctions are
+#    gitignored and only bootstrap creates 2 of the 6).
+run_suite "5. sync-agent-adapters" "bash '${SCRIPT_DIR}/sync-agent-adapters.sh' && bash '${SCRIPT_DIR}/sync-agent-adapters.sh' --verify-only"
 
 # 6. test-bootstrap.sh
 run_suite "6. test-bootstrap" "bash '${SCRIPT_DIR}/test-bootstrap.sh'"
+
+# 7. skills-index drift check (the wiring map must match the store on disk)
+# 8. adapter parity check (every agent gets the same capabilities)
+# 9. Spec Kit vendored-file integrity
+if [ -n "${PYTHON_CMD:-${PYTHON_BIN:-}}" ]; then
+    PY_EXEC="${PYTHON_CMD:-${PYTHON_BIN}}"
+    run_suite "7. skills-index" "'${PY_EXEC}' '${SCRIPT_DIR}/generate-skills-index.py' --check"
+    run_suite "8. verify-adapters" "'${PY_EXEC}' '${SCRIPT_DIR}/verify-adapters.py'"
+    run_suite "9. specify-integrity" "'${PY_EXEC}' '${SCRIPT_DIR}/verify-specify-integrity.py'"
+else
+    echo "[WARN] Python not found; skipping skills-index and adapter checks"
+fi
 
 echo ""
 echo "============================================================"

@@ -1,9 +1,14 @@
 # Moonshot Kimi Code CLI Configuration
-# Standardized project configuration
+# Standardized project configuration.
+#
+# NOTE: Kimi Code CLI does NOT read MCP servers from config.toml — they live in
+# `.kimi-code/mcp.json` (project scope) or `~/.kimi-code/mcp.json` (user scope).
+# That file is provided in this repository. The `rules_file` key below was not
+# part of Kimi's configuration reference and was silently ignored; Kimi reads
+# AGENTS.md natively.
 
 [project]
 name = "boilerplate"
-rules_file = "AGENTS.md"
 respect_gitignore = true
 
 [skills]

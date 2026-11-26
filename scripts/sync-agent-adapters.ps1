@@ -59,7 +59,19 @@ foreach ($relLink in $JunctionTargets) {
                 }
             }
         } else {
-            Write-Host "[PASS] Junction verified: $relLink" -ForegroundColor Green
+            # A junction must actually point at the canonical store. Checking
+            # only "is a reparse point" let a junction aimed at the wrong
+            # directory pass verification.
+            $resolvedTarget = $null
+            if ($item.PSObject.Properties['Target'] -and $item.Target) {
+                $resolvedTarget = @($item.Target)[0]
+            }
+            if ($resolvedTarget -and (Split-Path -Parent $resolvedTarget) -ne (Split-Path -Parent $SkillsCanonical)) {
+                Write-Host "[FAIL] $relLink points at '$resolvedTarget', expected '$SkillsCanonical'." -ForegroundColor Red
+                $Errors++
+            } else {
+                Write-Host "[PASS] Junction verified and resolves: $relLink" -ForegroundColor Green
+            }
         }
     } else {
         if ($VerifyOnly) {

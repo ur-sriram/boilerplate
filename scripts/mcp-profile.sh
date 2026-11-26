@@ -1,86 +1,28 @@
 #!/usr/bin/env sh
-# Dynamic MCP Profile Switcher for POSIX environments (Linux / macOS).
-# Switches active MCP servers across agent configurations.
+# Dynamic MCP Profile Switcher (POSIX wrapper).
+#
+# The implementation lives in scripts/mcp-profile.py so the POSIX and Windows
+# paths can never drift. The previous inline .sh version only updated
+# `opencode.json` and `.antigravity/*`, leaving six other adapter configs on
+# the wrong profile.
+#
+# Usage: ./scripts/mcp-profile.sh <core|ui|compression|all>
+#        ./scripts/mcp-profile.sh --status
 
-set -e
+set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd -P)"
 
 PROFILE="${1:-core}"
 
-case "$PROFILE" in
-    core|ui|compression|all) ;;
-    *)
-        echo "Error: Unknown profile '$PROFILE'. Valid options: core, ui, compression, all" >&2
-        exit 1
-        ;;
-esac
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+else
+    echo "[FAIL] Python is required to switch MCP profiles." >&2
+    exit 1
+fi
 
-echo "Switching MCP profile to '$PROFILE' in $PROJECT_ROOT..."
-
-python3 -c "
-import json, sys, os
-
-project_root = '''$PROJECT_ROOT'''
-profile = '''$PROFILE'''
-
-graphify_active = True
-ui_active = profile in ('ui', 'all')
-headroom_active = profile in ('compression', 'all')
-
-# 1. Update opencode.json
-opencode_path = os.path.join(project_root, 'opencode.json')
-if os.path.exists(opencode_path):
-    try:
-        with open(opencode_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        if 'mcp' in data:
-            if 'graphify' in data['mcp']:
-                data['mcp']['graphify']['enabled'] = graphify_active
-            if 'ui-registry' in data['mcp']:
-                data['mcp']['ui-registry']['enabled'] = ui_active
-            if 'headroom' in data['mcp']:
-                data['mcp']['headroom']['enabled'] = headroom_active
-        with open(opencode_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2)
-        print('[OK] Updated opencode.json')
-    except Exception as e:
-        print(f'[WARN] Failed to update opencode.json: {e}')
-
-# 2. Update .antigravity/mcp_config.json
-mcp_path = os.path.join(project_root, '.antigravity', 'mcp_config.json')
-if os.path.exists(mcp_path):
-    try:
-        with open(mcp_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        if 'mcpServers' in data:
-            if 'graphify' in data['mcpServers']:
-                data['mcpServers']['graphify']['disabled'] = not graphify_active
-            if 'ui-registry' in data['mcpServers']:
-                data['mcpServers']['ui-registry']['disabled'] = not ui_active
-            if 'headroom' in data['mcpServers']:
-                data['mcpServers']['headroom']['disabled'] = not headroom_active
-        with open(mcp_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2)
-        print('[OK] Updated .antigravity/mcp_config.json')
-    except Exception as e:
-        print(f'[WARN] Failed to update .antigravity/mcp_config.json: {e}')
-
-# 3. Update .antigravity/settings.json
-settings_path = os.path.join(project_root, '.antigravity', 'settings.json')
-if os.path.exists(settings_path):
-    try:
-        with open(settings_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        if 'context' in data:
-            data['context']['mcp_profile'] = profile
-        with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2)
-        print('[OK] Updated .antigravity/settings.json')
-    except Exception as e:
-        print(f'[WARN] Failed to update .antigravity/settings.json: {e}')
-"
-
-echo "Successfully applied MCP Profile: '$PROFILE'"
-exit 0
+exec "${PYTHON_BIN}" "${PROJECT_ROOT}/scripts/mcp-profile.py" "${PROFILE}"

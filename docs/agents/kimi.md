@@ -6,6 +6,11 @@ This guide details configuration, rules discovery, and boundary enforcement for 
 
 Kimi Code CLI supports local project configuration via `.kimi/config.toml`. It automatically reads project rules from `AGENTS.md` and discovers skills from `.agents/skills/`.
 
+**MCP servers are not read from `config.toml`.** Kimi Code CLI loads them from
+`mcp.json` — project scope is `.kimi-code/mcp.json` (provided here), user
+scope is `~/.kimi-code/mcp.json`. The project file is gated by workspace
+trust: approve the prompt at startup.
+
 ## 2. Configuration (`.kimi/config.toml`)
 
 ```toml

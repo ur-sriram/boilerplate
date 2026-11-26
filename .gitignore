@@ -69,9 +69,9 @@ sandbox/
 Thumbs.db
 
 # Secondary Agent Mirrored Skills (Fallback when junctions not used)
-.claude/skills/
-.cline/skills/
-.codex/skills/
-.cursor/skills/
-.qoder/skills/
-.windsurf/skills/
+.claude/skills
+.cline/skills
+.codex/skills
+.cursor/skills
+.qoder/skills
+.windsurf/skills

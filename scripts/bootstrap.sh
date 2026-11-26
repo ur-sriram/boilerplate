@@ -24,37 +24,25 @@ mkdir -p "${CANONICAL_SKILLS}"
 mkdir -p "${PROJECT_ROOT}/.codex"
 mkdir -p "${PROJECT_ROOT}/.qoder"
 
-# 3. Create relative symlinks for secondary agents
+# 3. Establish the skill junctions for every supported agent.
+#    Delegated to sync-agent-adapters.sh so the link logic lives in ONE place.
+#    The previous inline copy only created .codex and .qoder, which left Claude
+#    Code, Cursor, Windsurf and Cline with zero access to the 378-skill store.
 echo "[INFO] Establishing relative symbolic links to .agents/skills..."
-if ln -sfn "../.agents/skills" "${PROJECT_ROOT}/.codex/skills" 2>/dev/null; then
-    echo "[OK] Symlink established: .codex/skills -> ../.agents/skills"
+if bash "${PROJECT_ROOT}/scripts/sync-agent-adapters.sh"; then
+    echo "[OK] Skill junctions established for all supported agents."
 else
-    echo "[WARN] Symlink failed; creating fallback directory..."
-    mkdir -p "${PROJECT_ROOT}/.codex/skills"
-    if [ -d "${CANONICAL_SKILLS}" ]; then
-        cp -R "${CANONICAL_SKILLS}/"* "${PROJECT_ROOT}/.codex/skills/" 2>/dev/null || true
-    fi
-fi
-
-if ln -sfn "../.agents/skills" "${PROJECT_ROOT}/.qoder/skills" 2>/dev/null; then
-    echo "[OK] Symlink established: .qoder/skills -> ../.agents/skills"
-else
-    echo "[WARN] Symlink failed; creating fallback directory..."
-    mkdir -p "${PROJECT_ROOT}/.qoder/skills"
-    if [ -d "${CANONICAL_SKILLS}" ]; then
-        cp -R "${CANONICAL_SKILLS}/"* "${PROJECT_ROOT}/.qoder/skills/" 2>/dev/null || true
-    fi
+    echo "[WARN] Some skill junctions could not be established; run scripts/sync-agent-adapters.sh manually."
 fi
 
 # 4. Ensure .gitignore protects mirrored directories
 GITIGNORE_FILE="${PROJECT_ROOT}/.gitignore"
 if [ -f "${GITIGNORE_FILE}" ]; then
-    if ! grep -q "^\.codex/skills/" "${GITIGNORE_FILE}" 2>/dev/null; then
-        echo -e "\n# Secondary Agent Mirrored Skills\n.codex/skills/" >> "${GITIGNORE_FILE}"
-    fi
-    if ! grep -q "^\.qoder/skills/" "${GITIGNORE_FILE}" 2>/dev/null; then
-        echo ".qoder/skills/" >> "${GITIGNORE_FILE}"
-    fi
+    for pattern in ".claude/skills/" ".cline/skills/" ".codex/skills/" ".cursor/skills/" ".qoder/skills/" ".windsurf/skills/"; do
+        if ! grep -q "^${pattern}$" "${GITIGNORE_FILE}" 2>/dev/null; then
+            echo -e "\n# Secondary Agent Mirrored Skills\n${pattern}" >> "${GITIGNORE_FILE}"
+        fi
+    done
 fi
 
 # 5. Environment Runtime Checks

@@ -19,9 +19,37 @@ To prevent state amnesia across model context resets or agent handoffs, agents m
 ## 2. Specification-Driven Development (`.specify/`)
 
 Before implementing significant features:
-1. Initialize the feature using `.specify/templates/spec-template.md`.
-2. Decompose user requirements into verifiable tasks using `.specify/templates/tasks-template.md`.
-3. Check and update the project constitution in `.specify/memory/constitution.md` to guarantee alignment with core project invariants.
+
+1. **Scaffold** the feature so the artifacts exist in the canonical layout
+   `specs/<NNN>-<slug>/`:
+   - POSIX: `bash .specify/scripts/bash/create-new-feature.sh "<description>" --short-name <slug>`
+   - Windows: `pwsh .specify/scripts/powershell/create-new-feature.ps1 "<description>" -ShortName <slug>`
+2. **Fill** `spec.md` using `.specify/templates/spec-template.md`
+   (user scenarios → requirements → success criteria → assumptions).
+3. **Plan**: `setup-plan.sh` / `setup-plan.ps1` copies `plan-template.md` to
+   `plan.md`, which includes a mandatory **Constitution Check** section.
+4. **Decompose**: `setup-tasks.sh` / `setup-tasks.ps1` resolves
+   `tasks-template.md`; write `tasks.md` with atomic, independently verifiable
+   tasks (`[ID] [P?] [Story] Description`).
+5. **Check alignment** against the project constitution in
+   `.specify/memory/constitution.md`.
+
+The scripts scaffold and the agent authors: the templates are copied in
+unfilled, and the agent writes the real content. `check-prerequisites.{sh,ps1}`
+validates that the required artifacts exist before the next phase.
+
+**Where planning artifacts live — four distinct destinations:**
+
+| Artifact | Location | Owner |
+|---|---|---|
+| `spec.md`, `plan.md`, `tasks.md` | `specs/<NNN>-<slug>/` | Spec Kit scripts + agent |
+| Implementation plan | `docs/superpowers/plans/YYYY-MM-DD-<feature>.md` | `superpowers/writing-plans` |
+| Live execution state | `.planning/task_plan.md`, `findings.md`, `progress.md` | `planning-with-files` |
+| Capability map / module spec | `SPEC-<module>.md` (project root) | `agent-skills/spec-driven-development` |
+
+Do not mix them up: `docs/architecture/conflict-resolution.md` assigns
+Spec-Kit the "Specification & Architecture" domain and Superpowers
+`writing-plans` the "Tactical Task Decomposition" domain.
 
 ---
 

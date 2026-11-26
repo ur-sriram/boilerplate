@@ -2,9 +2,16 @@
 
 This playbook governs how JetBrains Junie executes development tasks in this repository.
 
+## 0. Canonical Project Index
+
+**Read `AGENTS.md` first.** It is the single always-on source of truth for the
+project invariants, the skill index (`.agents/rules/skills-index.md`) and the
+slash-command surface. The rules below are a Junie-specific restatement of
+those invariants — where the two disagree, `AGENTS.md` wins.
+
 ## 1. Project Invariants & Karpathy Guidelines
 
-- **Strict Scoping**: Operate strictly within the repository root `c:\sriram\boilerplate`. Do not touch files in user profile, application data, or global IDE directories.
+- **Strict Scoping**: Operate strictly within the repository root (the directory that contains this playbook). Do not touch files in user profile, application data, or global IDE directories.
 - **Think Before Coding**: State assumptions explicitly. Surface tradeoffs. Push back on overcomplication.
 - **Simplicity First**: Deliver the minimum viable code that satisfies the requirements. Avoid speculative abstractions or unrequested configurability.
 - **Surgical Changes**: Edit only what is necessary. Preserve existing style and comments. Clean up only your own orphans.

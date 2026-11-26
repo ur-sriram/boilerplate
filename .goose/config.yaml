@@ -1,6 +1,9 @@
 # Goose CLI Configuration (Project-Scoped)
 version: 1.0.0
 instructions: AGENTS.md
+
+# --- MCP extensions --------------------------------------------------------
+# graphify is the only always-on server (the "core" profile).
 extensions:
   graphify:
     name: graphify
@@ -10,4 +13,23 @@ extensions:
       - "graphifyy"
       - "graphify-mcp"
     enabled: true
+    type: stdio
+  ui-registry:
+    name: ui-registry
+    cmd: npx
+    args:
+      - "-y"
+      - "ui-registry-mcp@0.7.1"
+    enabled: false
+    type: stdio
+  headroom:
+    name: headroom
+    cmd: uvx
+    args:
+      - "--from"
+      - "headroom-ai[mcp]"
+      - "headroom"
+      - "mcp"
+      - "serve"
+    enabled: false
     type: stdio

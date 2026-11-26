@@ -2,18 +2,34 @@
   "mcpServers": {
     "graphify": {
       "command": "uvx",
-      "args": ["graphify-mcp"],
-      "disabled": false
+      "args": [
+        "--from",
+        "graphifyy",
+        "graphify-mcp"
+      ],
+      "disabled": false,
+      "description": "Codebase AST knowledge graph server for structural exploration"
     },
     "ui-registry": {
       "command": "npx",
-      "args": ["-y", "ui-registry-mcp"],
-      "disabled": true
+      "args": [
+        "-y",
+        "ui-registry-mcp@0.7.1"
+      ],
+      "disabled": true,
+      "description": "Component discovery MCP server across 12 shadcn-style registries (ui profile)"
     },
     "headroom": {
       "command": "uvx",
-      "args": ["headroom-mcp"],
-      "disabled": false
+      "args": [
+        "--from",
+        "headroom-ai[mcp]",
+        "headroom",
+        "mcp",
+        "serve"
+      ],
+      "disabled": true,
+      "description": "Dynamic context compression engine (compression profile)"
     }
   }
 }
