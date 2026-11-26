@@ -7,7 +7,7 @@
     3. Programmatically asserts:
        - 0 files modified outside the temp directory (asserts no writes to ~/.gemini, ~/.claude, ~/.config, etc.)
        - 100% of JSON/TOML/YAML configuration files parse without syntax errors.
-       - AGENTS.md line count <= 120 lines and character count <= 4,000 characters.
+       - AGENTS.md line count <= 120 lines and character count <= 9,000 characters.
        - 100% of skills in .agents/skills/ are wired to at least one rule file.
        - 100% of .aiignore patterns are mirrored in .gitignore.
 .PARAMETER ProjectRoot
@@ -241,6 +241,11 @@ if ($configErrors -eq 0) {
 }
 
 # ----------------------------------------------------------------------
+# Layer 1 context budget for AGENTS.md (must match the POSIX twin and the
+# documentation in .specify/memory/constitution.md).
+$MaxAgentsLines = 120
+$MaxAgentsChars = 9000
+
 # Assertion 3: AGENTS.md Size & Structure
 # ----------------------------------------------------------------------
 Write-Host "`n--- Assertion 3: AGENTS.md Size & Structure ---" -ForegroundColor Cyan
@@ -253,8 +258,19 @@ if (-not (Test-Path -LiteralPath $agentsPath)) {
     $lineCount = (Get-Content -LiteralPath $agentsPath).Count
     $charCount = $rawContent.Length
 
-    Write-Host "[INFO] AGENTS.md metrics: $lineCount lines, $charCount characters (Uncapped single source of truth)."
-    Write-Host "[PASS] AGENTS.md verified cleanly as Universal Core Index." -ForegroundColor Green
+    Write-Host "[INFO] AGENTS.md metrics: $lineCount lines, $charCount characters (budget: $MaxAgentsLines lines / $MaxAgentsChars chars)."
+
+    # The budget is ENFORCED, not merely reported. AGENTS.md is loaded into
+    # every agent turn, so an unbounded file silently inflates every request.
+    if ($lineCount -gt $MaxAgentsLines) {
+        Write-Host "[FAIL] AGENTS.md is $lineCount lines (max $MaxAgentsLines). Move detail into .agents/rules/." -ForegroundColor Red
+        $TotalErrors++
+    } elseif ($charCount -gt $MaxAgentsChars) {
+        Write-Host "[FAIL] AGENTS.md is $charCount characters (max $MaxAgentsChars). Move detail into .agents/rules/." -ForegroundColor Red
+        $TotalErrors++
+    } else {
+        Write-Host "[PASS] AGENTS.md within budget ($lineCount/$MaxAgentsLines lines, $charCount/$MaxAgentsChars chars)." -ForegroundColor Green
+    }
 }
 
 # ----------------------------------------------------------------------

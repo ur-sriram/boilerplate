@@ -198,6 +198,52 @@ def check_mcp(adapter: dict) -> list[str]:
     return errors
 
 
+# Every MCP server must keep its package caches inside the project, so that
+# importing this boilerplate never writes to the user's home directory.
+REQUIRED_CACHE_ENV = {
+    "UV_CACHE_DIR",
+    "UV_DATA_DIR",
+    "UV_TOOL_DIR",
+    "XDG_CACHE_HOME",
+    "XDG_DATA_HOME",
+    "npm_config_cache",
+}
+
+
+def check_cache_isolation(adapter: dict) -> list[str]:
+    """Fail when an adapter's MCP servers could write outside the project."""
+    errors: list[str] = []
+    mcp_path = adapter.get("mcp")
+    if not mcp_path:
+        return errors
+    full = REPO_ROOT / mcp_path
+    if not full.exists():
+        return errors
+
+    if full.suffix == ".json":
+        data = json.loads(read(full))
+        container = data.get("mcpServers") or data.get("mcp") or {}
+        for name, entry in container.items():
+            if not isinstance(entry, dict):
+                continue
+            env = entry.get("env") or {}
+            missing = sorted(REQUIRED_CACHE_ENV - set(env))
+            if missing:
+                errors.append(
+                    f"{adapter['name']}: MCP server '{name}' in {mcp_path} does not pin "
+                    f"the project-local cache env ({', '.join(missing)})"
+                )
+    else:
+        text = read(full)
+        for key in REQUIRED_CACHE_ENV:
+            if key not in text:
+                errors.append(
+                    f"{adapter['name']}: {mcp_path} does not pin the project-local "
+                    f"cache env '{key}'"
+                )
+    return errors
+
+
 def check_hooks(adapter: dict) -> list[str]:
     """Verify hook wiring.
 
@@ -305,7 +351,7 @@ def main() -> int:
 
     for adapter in adapter_specs():
         rule_err = check_rules(adapter)
-        mcp_err = check_mcp(adapter)
+        mcp_err = check_mcp(adapter) + check_cache_isolation(adapter)
         hook_err = check_hooks(adapter)
         cmd_err = check_commands(adapter)
 

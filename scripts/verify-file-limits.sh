@@ -57,24 +57,23 @@ count_effective_lines() {
     ' "$1"
 }
 
-VIOLATION_LIST="$(mktemp)"
-trap 'rm -f "$VIOLATION_LIST"' EXIT
-
-SCANNED=0
-find_files | while IFS= read -r -d '' file; do
-    SCANNED=$((SCANNED + 1))
+# NOTE: the previous revision wrote its violation list to `mktemp`, i.e. into
+# the system temp directory — the only write this repository performed outside
+# the project folder during a verification run. The list is now held in a
+# shell variable so the run touches nothing outside the project.
+VIOLATIONS="$(find_files | while IFS= read -r -d '' file; do
     LINES=$(count_effective_lines "$file")
     if [ "$LINES" -gt "$MAX_LINES" ]; then
-        printf '%s|%s\n' "${file#${ROOT_DIR}/}" "$LINES" >> "$VIOLATION_LIST"
+        printf '%s|%s\n' "${file#${ROOT_DIR}/}" "$LINES"
     fi
-done
+done)"
 
 SCANNED=$(find_files | tr -cd '\0' | wc -c | tr -d ' ')
 
-if [ -s "$VIOLATION_LIST" ]; then
-    while IFS='|' read -r path lines; do
+if [ -n "$VIOLATIONS" ]; then
+    printf '%s\n' "$VIOLATIONS" | while IFS='|' read -r path lines; do
         [ -n "$path" ] && echo "[FAIL] $path ($lines effective lines > $MAX_LINES)"
-    done < "$VIOLATION_LIST"
+    done
     echo "Files scanned: $SCANNED"
     echo "[FAIL] File line limit verification failed."
     exit 1

@@ -9,6 +9,7 @@ Production-ready, project-level boilerplate for autonomous coding agents. Zero g
 - **Strict Project Scoping**: NEVER modify files outside the project root (the directory that contains this `AGENTS.md`). Writes to `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, or `~/.claude` are forbidden.
 - **Secret Hygiene**: ZERO secrets committed. Keep sensitive credentials in `.env` (strictly mirrored and ignored by `.gitignore` and `.aiignore`); see [`.env.example`](.env.example).
 - **Episodic Memory**: Cross-session memory and learned operational facts persist in `.agents/memory/` using the `claude-mem` architecture.
+- **Project-Level Isolation**: Everything this repository configures lives inside the project folder. MCP servers and `npm` are pointed at the project-local `.cache/` directory (via the `env` blocks in every adapter config and the project `.npmrc`), so importing this boilerplate does not modify the user's global configuration. The only sanctioned write outside the project is the self-test sandbox, which lives in the system temp directory and is deleted on exit.
 - **Single Canonical Skill Store**: Skills reside strictly in `.agents/skills/`. Agents access them directly or via zero-elevation NTFS directory junctions (`mklink /J`) and symlinks. `scripts/sync-agent-adapters.sh` creates and verifies all six junctions.
 
 ---

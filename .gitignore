@@ -75,3 +75,21 @@ Thumbs.db
 .cursor/skills
 .qoder/skills
 .windsurf/skills
+
+# Secondary Agent Mirrored Skills
+.claude/skills/
+
+# Secondary Agent Mirrored Skills
+.cline/skills/
+
+# Secondary Agent Mirrored Skills
+.codex/skills/
+
+# Secondary Agent Mirrored Skills
+.cursor/skills/
+
+# Secondary Agent Mirrored Skills
+.qoder/skills/
+
+# Secondary Agent Mirrored Skills
+.windsurf/skills/

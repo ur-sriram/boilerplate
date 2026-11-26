@@ -1,34 +1,102 @@
 /**
- * OpenCode "no blind grepping" guard.
+ * OpenCode "prefer the knowledge graph" advisor.
  *
- * .agents/rules/codebase-exploration.md forbids naive whole-repository
- * grep / recursive string searches and mandates the Graphify AST graph for
- * code discovery. This plugin enforces that at the tool boundary, which is
- * where it is cheap to enforce (the previous revision was a stub that
- * returned `allowed: true` unconditionally and never ran).
+ * `.agents/rules/codebase-exploration.md` requires agents to use the
+ * Graphify AST graph for code discovery and to fall back to grep only for
+ * raw string literals, log messages and configuration values.
  *
- * Exemptions: explicit path arguments, file-scoped globs, and searches that
- * already target a specific directory.
+ * IMPORTANT — THIS ADVISES, IT DOES NOT BLOCK.
+ * The first implementation of this plugin threw an exception for any
+ * repository-wide grep. Measurement showed it was wrong in BOTH directions:
+ *   - it blocked `grep "foo" src/features/feature.ts`  (a single-file search)
+ *   - it allowed `grep -r "foo" .`                      (a true whole-repo scan)
+ * because `-r` was treated as a narrowing flag and a trailing path argument
+ * was never recognised. Blocking legitimate searches in an autonomous loop is
+ * worse than nudging, so the guard now prints a one-line reminder and lets
+ * the command run. Hard enforcement of that rule belongs in the prompt layer
+ * (.agents/rules/codebase-exploration.md) and in Graphify itself.
  */
-const WHOLE_REPO_PATTERNS = [
-  /\bgrep\b(?![^\s]*\s--?[\w-]*[A-Za-z0-9_./-]+)/,
-  /\brg\b/,
-  /\bag\b/,
-];
 
-const NARROWING_FLAGS = ['-r', '--recursive', '-l', '--files', '--include', '--glob', '-g'];
+const SEARCH_COMMANDS = new Set(['grep', 'egrep', 'fgrep', 'rg', 'ripgrep', 'ag', 'ack']);
 
-function looksWholeRepo(command) {
-  if (!command || typeof command !== 'string') return false;
-  const cmd = command.trim();
-  if (!WHOLE_REPO_PATTERNS.some((pattern) => pattern.test(cmd))) return false;
+// Flags that consume the following token as their value.
+const FLAGS_WITH_VALUE = new Set([
+  '-e', '--regexp', '-m', '--max-count', '-f', '--file',
+  '--include', '--exclude', '--include-dir', '--exclude-dir',
+  '-g', '--glob', '--type', '-t', '--ignore-case', '-i',
+]);
 
-  // A narrowing flag or an explicit path/glob makes the search scoped.
-  if (NARROWING_FLAGS.some((flag) => cmd.includes(flag))) return false;
-  if (/\s(\.{1,2}\/|\/|[A-Za-z0-9_-]+\/)[A-Za-z0-9_./-]*\s/.test(cmd)) return false;
-  if (cmd.includes('."') || cmd.includes("'")) return false;
+/** Split a command into tokens, honouring single and double quotes. */
+function tokenize(command) {
+  const tokens = [];
+  let current = '';
+  let quote = null;
 
-  return true;
+  for (const char of command) {
+    if (quote) {
+      if (char === quote) quote = null;
+      else current += char;
+    } else if (char === '"' || char === "'") {
+      quote = char;
+    } else if (/\s/.test(char)) {
+      if (current) {
+        tokens.push(current);
+        current = '';
+      }
+    } else {
+      current += char;
+    }
+  }
+  if (current) tokens.push(current);
+  return tokens;
+}
+
+/** Paths that mean "the whole tree". */
+function isBroadPath(path) {
+  const normalized = path.replace(/\/+$/, '');
+  return (
+    normalized === '.' ||
+    normalized === '..' ||
+    normalized === '' ||
+    normalized === '/' ||
+    normalized === '**'
+  );
+}
+
+/**
+ * Return the broad path of an unbounded search, or null when the search is
+ * scoped to specific files/directories.
+ */
+function findBroadSearch(command) {
+  if (!command || typeof command !== 'string') return null;
+
+  const tokens = tokenize(command.trim());
+  if (tokens.length === 0) return null;
+
+  const commandName = tokens[0].split('/').pop();
+  if (!SEARCH_COMMANDS.has(commandName)) return null;
+
+  // Drop the command name, then the flags (and the values they consume).
+  const positional = [];
+  for (let index = 1; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    if (token.startsWith('-')) {
+      if (FLAGS_WITH_VALUE.has(token)) index += 1; // skip the flag's value
+      continue;
+    }
+    positional.push(token);
+  }
+
+  // The first positional is the search pattern; everything after it is a path.
+  const paths = positional.slice(1);
+
+  // No path at all => the search walks the current directory.
+  if (paths.length === 0) return '(current directory)';
+
+  for (const path of paths) {
+    if (isBroadPath(path)) return path;
+  }
+  return null;
 }
 
 export const server = async ({ directory }) => {
@@ -37,13 +105,14 @@ export const server = async ({ directory }) => {
   return {
     'tool.execute.before': async (input, output) => {
       const command = output?.args?.command ?? '';
-      if (!looksWholeRepo(command)) return;
+      const broad = findBroadSearch(command);
+      if (!broad) return;
 
-      throw new Error(
-        `[GUARDRAIL] Whole-repository grep blocked ("${String(command).slice(0, 120)}").\n` +
-          `Use the graphify MCP server (search_graph / trace_path / get_code_snippet) per ` +
-          `.agents/rules/codebase-exploration.md, or narrow the search to a specific path. ` +
-          `Project root: ${projectRoot}`,
+      console.error(
+        `[ADVISORY] Repository-wide search detected ("${String(command).slice(0, 120)}"). ` +
+          `For code structure use the graphify MCP server (search_graph / trace_path / ` +
+          `get_code_snippet) per .agents/rules/codebase-exploration.md; reserve grep for ` +
+          `string literals, log messages and config values. Project root: ${projectRoot}`,
       );
     },
   };

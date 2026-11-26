@@ -13,6 +13,13 @@ extensions:
       - "graphifyy"
       - "graphify-mcp"
     enabled: true
+    envs:
+      UV_CACHE_DIR: ".cache/uv"
+      UV_DATA_DIR: ".cache/uv-data"
+      UV_TOOL_DIR: ".cache/uv-tools"
+      XDG_CACHE_HOME: ".cache"
+      XDG_DATA_HOME: ".cache/xdg-data"
+      npm_config_cache: ".cache/npm"
     type: stdio
   ui-registry:
     name: ui-registry
@@ -21,6 +28,13 @@ extensions:
       - "-y"
       - "ui-registry-mcp@0.7.1"
     enabled: false
+    envs:
+      UV_CACHE_DIR: ".cache/uv"
+      UV_DATA_DIR: ".cache/uv-data"
+      UV_TOOL_DIR: ".cache/uv-tools"
+      XDG_CACHE_HOME: ".cache"
+      XDG_DATA_HOME: ".cache/xdg-data"
+      npm_config_cache: ".cache/npm"
     type: stdio
   headroom:
     name: headroom
@@ -32,4 +46,11 @@ extensions:
       - "mcp"
       - "serve"
     enabled: false
+    envs:
+      UV_CACHE_DIR: ".cache/uv"
+      UV_DATA_DIR: ".cache/uv-data"
+      UV_TOOL_DIR: ".cache/uv-tools"
+      XDG_CACHE_HOME: ".cache"
+      XDG_DATA_HOME: ".cache/xdg-data"
+      npm_config_cache: ".cache/npm"
     type: stdio

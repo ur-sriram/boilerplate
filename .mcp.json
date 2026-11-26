@@ -8,7 +8,15 @@
         "graphify-mcp"
       ],
       "description": "Codebase AST knowledge graph server for structural exploration",
-      "disabled": false
+      "disabled": false,
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "ui-registry": {
       "command": "npx",
@@ -17,7 +25,15 @@
         "ui-registry-mcp@0.7.1"
       ],
       "disabled": true,
-      "description": "Component discovery MCP server across 12 shadcn-style registries (ui profile)"
+      "description": "Component discovery MCP server across 12 shadcn-style registries (ui profile)",
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "headroom": {
       "command": "uvx",
@@ -29,7 +45,15 @@
         "serve"
       ],
       "disabled": true,
-      "description": "Dynamic context compression engine (compression profile)"
+      "description": "Dynamic context compression engine (compression profile)",
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     }
   }
 }

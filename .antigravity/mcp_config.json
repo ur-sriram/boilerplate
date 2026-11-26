@@ -14,7 +14,15 @@
         "get_code_snippet",
         "query_graph",
         "get_architecture"
-      ]
+      ],
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "ui-registry": {
       "command": "npx",
@@ -29,7 +37,15 @@
         "get_component",
         "compare_components",
         "check_consistency"
-      ]
+      ],
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "headroom": {
       "command": "uvx",
@@ -41,7 +57,15 @@
         "serve"
       ],
       "disabled": true,
-      "autoApprove": []
+      "autoApprove": [],
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     }
   }
 }

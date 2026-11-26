@@ -9,7 +9,15 @@
         "graphify-mcp"
       ],
       "profile": "core",
-      "enabled": true
+      "enabled": true,
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "ui-registry": {
       "command": "npx",
@@ -18,7 +26,15 @@
         "ui-registry-mcp@0.7.1"
       ],
       "profile": "ui",
-      "enabled": false
+      "enabled": false,
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "headroom": {
       "command": "uvx",
@@ -30,7 +46,15 @@
         "serve"
       ],
       "profile": "compression",
-      "enabled": false
+      "enabled": false,
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     }
   }
 }

@@ -64,6 +64,26 @@ updated two of them, so the profiles silently disagreed.
 
 ---
 
+## 2.1 Project-Level Isolation
+
+Every MCP server in every adapter config pins its package caches inside the
+project:
+
+```json
+"env": {
+  "UV_CACHE_DIR": ".cache/uv",
+  "UV_DATA_DIR": ".cache/uv-data",
+  "UV_TOOL_DIR": ".cache/uv-tools",
+  "XDG_CACHE_HOME": ".cache",
+  "XDG_DATA_HOME": ".cache/xdg-data",
+  "npm_config_cache": ".cache/npm"
+}
+```
+
+The project `.npmrc` does the same for `npm install` (`cache=.cache/npm`).
+`scripts/verify-adapters.py` fails the build if any adapter drops these keys,
+so "zero global writes" cannot silently regress.
+
 ## 3. Programmatic Verification Suite
 
 Quality and boundary enforcement are verified programmatically from scratch without third-party frameworks. The master test suite is invoked via [`verify-all.cmd`](../../verify-all.cmd), `scripts/verify-all.ps1` or `scripts/verify-all.sh`, and runs **nine** suites:

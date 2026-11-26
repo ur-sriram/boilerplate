@@ -7,7 +7,9 @@ This Constitution defines the supreme operational law, non-negotiable boundaries
 ## Core Principles
 
 ### I. Strict Project Scoping & Zero Global Pollution (NON-NEGOTIABLE)
-All file reads, writes, edits, and terminal operations MUST strictly remain within the project root (the directory that contains this constitution). Modifying, inspecting, or creating files outside this project directory—including `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, `~/.claude`, `/etc`, or global package registries—is strictly forbidden. PreToolUse hooks (`scripts/hooks/protect-config.ps1` and `scripts/hooks/protect-config.sh`) intercept and abort any violation with exit code 1.
+All file reads, writes, edits, and terminal operations MUST strictly remain within the project root (the directory that contains this constitution). Modifying, inspecting, or creating files outside this project directory—including `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, `~/.claude`, `~/.cache`, `~/.npm`, `/etc`, or global package registries—is strictly forbidden. PreToolUse hooks (`scripts/hooks/run-hook.mjs`, and the `protect-config.{ps1,sh}` twins) intercept and abort any violation with exit code 1.
+
+**Package caches are part of the boundary.** MCP servers and `npm` are pinned to the project-local `.cache/` directory via the `env` block in every adapter MCP config (`UV_CACHE_DIR`, `UV_DATA_DIR`, `UV_TOOL_DIR`, `XDG_CACHE_HOME`, `XDG_DATA_HOME`, `npm_config_cache`) and the project `.npmrc` (`cache=.cache/npm`). `scripts/verify-adapters.py` fails if any adapter stops doing this. The single sanctioned write outside the project is the self-test sandbox, which lives in the system temp directory and is deleted when the run ends.
 
 ### II. Secret Hygiene & Zero Committed Credentials
 No secret, API key, private token, webhook secret, or credential may ever be committed to version control. All secrets are stored exclusively in `.env`, which is strictly ignored by `.gitignore` and mirrored in `.aiignore`. The [`.env.example`](../../.env.example) file provides the canonical public template for required environment variables.
@@ -21,7 +23,7 @@ Every code change must adhere to Andrej Karpathy's guidelines to prevent common 
 
 ### IV. Token Budget Discipline & Progressive Disclosure
 Context bloat degrades model reasoning and inflates latency. Context must follow the Three-Layer Progressive Disclosure model:
-- **Layer 1 Always-On Core** ([`AGENTS.md`](../../AGENTS.md)): Strictly capped at <= 120 lines and <= 4,000 characters (<= 1,000 tokens).
+- **Layer 1 Always-On Core** ([`AGENTS.md`](../../AGENTS.md)): Capped at ≤ 120 lines / ≤ 9,000 characters (≈ 2,200 tokens). The cap is ENFORCED by `scripts/test-bootstrap.sh` and `scripts/test-bootstrap.ps1` (Assertion 3), so the file cannot silently grow past its budget.
 - **Layer 2 On-Demand Rules** ([`.agents/rules/`](../../.agents/rules/)): Loaded conditionally based on task domain and file triggers.
 - **Dynamic MCP Profiles**: Default to the `core` profile (<= 350 tokens); enable `ui` or `compression` profiles only when actively needed.
 - **Terminal Output Compression**: Terminal streams are filtered via `rtk` (Rust Token Killer) to achieve 60–90% token reduction with guaranteed non-crashing fallback.
