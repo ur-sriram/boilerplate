@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question or idea
+    url: https://github.com/ur-sriram/boilerplate/discussions
+    about: Ask anything that is not a bug report or a feature request — help, ideas, show and tell.
+  - name: Contributing guide
+    url: https://github.com/ur-sriram/boilerplate/blob/main/CONTRIBUTING.md
+    about: How to set up the repo, what CI checks, and how to get a PR merged.

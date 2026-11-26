@@ -1,0 +1,61 @@
+name: Feature request
+description: Suggest a new skill, rule, command or adapter
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tell us what you want the boilerplate to do. If it is a new skill, a new
+        rule, a new slash command or support for another agent, say which — it
+        helps us route it.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation you are in, not only the solution you have in mind.
+      placeholder: |
+        When I work in Cursor, the rules are loaded by reference and the agent
+        skips the skill index, so it never picks the right workflow.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to happen?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area?
+      options:
+        - A new skill
+        - A new rule file
+        - A new slash command
+        - A new agent adapter
+        - Verification suite / CI
+        - Documentation
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Optional, but useful context.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched the existing issues and discussions
+          required: true
+        - label: This is not a security issue (security issues go to the private reporting form)
+          required: true

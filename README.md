@@ -1,18 +1,25 @@
 # Multi-Agent Boilerplate
 
-**A ready-made workspace for AI coding agents.** Clone it, run one command, and
-your agent gets 377 curated skills, strict project rules, safety guardrails and
-a self-checking test suite — all stored *inside the project*, so nothing leaks
-into your global config.
+![Demo: creating a project from the template, bootstrapping it, and watching the verification suite go green](docs/assets/demo.gif)
 
-Beginner friendly: if you can copy a command, you can use this.
+**A ready-made workspace for AI coding agents — 377 curated skills, project-local guardrails and a 10-suite self-check, pre-wired into 13 agents.** Clone it, run one command, and your agent already knows how your project works.
+
+[![CI](https://github.com/ur-sriram/boilerplate/actions/workflows/ci.yml/badge.svg)](https://github.com/ur-sriram/boilerplate/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-3fb950.svg)](LICENSE)
+[![Skills](https://img.shields.io/badge/skills-377-58a6ff.svg)](.agents/rules/skills-index.md)
+[![Agents](https://img.shields.io/badge/agents-13-d29922.svg)](docs/agents)
+[![Discussions](https://img.shields.io/badge/discussions-on-bc8cff.svg)](https://github.com/ur-sriram/boilerplate/discussions)
+[![Stars](https://img.shields.io/github/stars/ur-sriram/boilerplate?style=social)](https://github.com/ur-sriram/boilerplate/stargazers)
+[![Forks](https://img.shields.io/github/forks/ur-sriram/boilerplate?style=social)](https://github.com/ur-sriram/boilerplate/network/members)
+
+**[Live demo →](https://ur-sriram.github.io/boilerplate/)** · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Discussions](https://github.com/ur-sriram/boilerplate/discussions) · [Issues](https://github.com/ur-sriram/boilerplate/issues)
 
 ---
 
 ## Table of contents
 
 1. [What you get](#1-what-you-get)
-2. [Quick start (5 minutes)](#2-quick-start-5-minutes)
+2. [Quick start (one command)](#2-quick-start-one-command)
 3. [How to use it day to day](#3-how-to-use-it-day-to-day)
 4. [The slash commands](#4-the-slash-commands)
 5. [How the pieces fit together](#5-how-the-pieces-fit-together)
@@ -21,6 +28,8 @@ Beginner friendly: if you can copy a command, you can use this.
 8. [Configuring things](#8-configuring-things)
 9. [Making it yours](#9-making-it-yours)
 10. [When something goes wrong](#10-when-something-goes-wrong)
+11. [Contributing to this repo](#11-contributing-to-this-repo)
+12. [License and credits](#12-license-and-credits)
 
 ---
 
@@ -33,7 +42,7 @@ Beginner friendly: if you can copy a command, you can use this.
 | 🛡️ | **Guardrails that actually run** | A hook blocks any file write outside the project folder, on Windows, macOS and Linux — and the project's own package caches stay inside the project too. |
 | 📝 | **Plan before you code** | Spec-driven templates (`.specify/`) plus 8 slash commands like `/plan` and `/tdd` turn "build me X" into a written spec, plan and task list. |
 | 🧩 | **Works with 13 AI agents** | Claude Code, Cursor, Codex, Copilot, OpenCode, Junie, Kimi, Goose, Qoder, Windsurf, Cline, Antigravity, Freebuff — same rules, same skills, same commands in each. 12 of them are checked automatically by `scripts/verify-adapters.py`. |
-| ✅ | **A test suite that checks the repo itself** | 10 checks run in seconds: scripts parse, links resolve, files are under 400 lines, every agent has the same capabilities, the skill map is current. If something drifts, you find out immediately. |
+| ✅ | **A test suite that checks the repo itself** | 10 checks run in seconds: scripts parse, links resolve, files are under 400 lines, every agent has the same capabilities, the skill map is current. If something drifts, you find out immediately — in CI and on your machine. |
 | 🧠 | **Cross-session memory that actually persists** | Decisions, preferences and error recoveries are recorded in `.agents/memory/` and recalled by a hook when the next session starts — a local, project-scoped store, no external service, secrets scrubbed on write. |
 | 🚧 | **Sensible defaults for quality** | Strict TypeScript, a 400-line file cap, TDD as the default, a 4-step UI pipeline, and a "no secrets, no global writes" constitution. |
 
@@ -53,41 +62,38 @@ Everything is reversible — delete the folder and it's gone.
 
 ---
 
-## 2. Quick start (5 minutes)
+## 2. Quick start (one command)
 
-### Step 1 — Get the code
+### One command — Linux / macOS
 
 ```bash
-# Option A: start a new GitHub repo from it (recommended)
-gh repo create my-project --template sriram/boilerplate --clone
-cd my-project
-
-# Option B: just clone it
-git clone https://github.com/sriram/boilerplate.git my-project
-cd my-project
+gh repo create my-project --template ur-sriram/boilerplate --clone && cd my-project && ./scripts/bootstrap.sh
 ```
 
-### Step 2 — Set it up (creates the skill links your agent needs)
+That creates your repo from the template, clones it and wires up every agent's
+skill links in one go.
 
-```bash
-# Linux / macOS
-./scripts/bootstrap.sh
+### One command — Windows
 
-# Windows (Command Prompt)
-bootstrap.cmd
-
-# Windows (PowerShell)
-powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/bootstrap.ps1
+```powershell
+gh repo create my-project --template ur-sriram/boilerplate --clone; cd my-project; bootstrap.cmd
 ```
 
-### Step 3 — Check everything works
+### Or do it by hand
 
 ```bash
-# Linux / macOS
-./scripts/verify-all.sh
+# 1. Get the code
+git clone https://github.com/ur-sriram/boilerplate.git my-project
+cd my-project
 
-# Windows
-verify-all.cmd
+# 2. Set it up (creates the skill links your agent needs)
+./scripts/bootstrap.sh          # macOS / Linux
+bootstrap.cmd                   # Windows (Command Prompt)
+powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/bootstrap.ps1   # Windows (PowerShell)
+
+# 3. Check everything works
+./scripts/verify-all.sh         # macOS / Linux
+verify-all.cmd                  # Windows
 ```
 
 You should see this:
@@ -102,7 +108,10 @@ You should see this:
  7. skills-index           [PASS]
  8. verify-adapters        [PASS]
  9. specify-integrity      [PASS]
+10. opencode-plugins      [PASS]
+============================================================
  ALL VERIFICATION SUITES PASSED (100% GREEN)
+============================================================
 ```
 
 ### Step 4 — Install the project tools (optional, but recommended)
@@ -118,6 +127,12 @@ npm run typecheck
 
 Point your agent at the project folder. It reads `AGENTS.md` automatically, and
 from then on the rules, skills and commands are available.
+
+### Want to see it first?
+
+The **[live demo](https://ur-sriram.github.io/boilerplate/)** walks through the
+same flow in the browser — the layered architecture, the agent list, the
+verification suite and the one-command install.
 
 ---
 
@@ -193,7 +208,7 @@ Type `/` in your agent's chat. All eight work in every supported adapter.
 │    mcp-codemode                                              │
 └───────────────────────────────┬───────────────────────────────┘
                                 │ points to
-┌─ LOADED ON DEMAND ────────────▼─────────────────────────────┐
+┌─ LOADED ON DEMAND ───────────▼───────────────────────────────┐
 │  .agents/skills/   ← 377 skills, each with a governing rule   │
 │  .specify/         ← spec-driven development templates        │
 └──────────────────────────────────────────────────────────────┘
@@ -223,13 +238,13 @@ my-project/
 │   ├── skills/            ← 377 skills (the big library)
 │   ├── commands/          ← the 8 slash commands (source of truth)
 │   ├── mcp.json           ← MCP server definitions
-│   └── memory/            ← cross-session memory (claude-mem store)
+│   └── memory/            ← cross-session memory (claude-mem store) (claude-mem store)
 ├── .specify/              ← spec-driven development (Spec Kit)
 ├── specs/                 ← your feature specs (created by /plan)
 ├── .planning/             ← live task state (task_plan, findings, progress)
 ├── src/features/          ← your actual code, one folder per feature
 ├── scripts/               ← bootstrap + verification scripts
-├── docs/agents/           ← per-agent setup guides
+├── docs/                  ← per-agent setup guides + assets
 └── package.json           ← npm test / lint / typecheck
 ```
 
@@ -354,9 +369,24 @@ Two habits worth keeping:
 
 ---
 
-## License & credits
+## 11. Contributing to this repo
+
+Contributions are welcome, including first ones. The whole contribution
+guide — how to set up, the rules the CI enforces, and how to get a PR merged —
+lives in [CONTRIBUTING.md](CONTRIBUTING.md). Issues labelled
+[good first issue](https://github.com/ur-sriram/boilerplate/issues?q=label%3A%22good+first+issue%22)
+are a good place to start.
+
+Questions that are not bugs? Ask them in
+[Discussions](https://github.com/ur-sriram/boilerplate/discussions).
+
+---
+
+## 12. License and credits
 
 All original code, rules and scripts are MIT licensed — see [LICENSE](LICENSE).
 Third-party skills and tools (Superpowers, Spec Kit, Impeccable, Agency
 personas, and 15 more) are catalogued with pinned commit SHAs, licences and
 adaptation notes in [THIRD_PARTY.md](THIRD_PARTY.md).
+
+Every release is listed in [CHANGELOG.md](CHANGELOG.md).

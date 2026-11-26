@@ -1,0 +1,79 @@
+name: Bug report
+description: Something in the boilerplate does not work as documented
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please fill in the sections below — the
+        verification output is usually enough to find the problem.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What went wrong, and what did you expect instead?
+      placeholder: |
+        `./scripts/verify-all.sh` fails at suite 5 with "skill junction missing".
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The exact commands you ran.
+      placeholder: |
+        1. Clone the repo
+        2. Run `./scripts/bootstrap.sh`
+        3. Run `./scripts/verify-all.sh`
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The tag or commit SHA you are running.
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: agent
+    attributes:
+      label: Which agent?
+      description: Which AI agent were you using, if any?
+      placeholder: Claude Code
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Verification output
+      description: Paste the output of `./scripts/verify-all.sh` (or `verify-all.cmd`).
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched the existing issues and discussions
+          required: true
+        - label: I read the Troubleshooting table in the README
+          required: true
+        - label: This is not a security issue (security issues go to the private reporting form)
+          required: true
