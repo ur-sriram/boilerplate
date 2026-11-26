@@ -68,6 +68,9 @@ sandbox/
 .DS_Store
 Thumbs.db
 
+# Episodic Memory Store (machine-local state)
+.agents/memory/episodes.jsonl
+
 # Secondary Agent Mirrored Skills (Fallback when junctions not used)
 .claude/skills
 .cline/skills

@@ -17,6 +17,12 @@
       "posix_command": "sh ./scripts/hooks/session-start.sh",
       "timeout_ms": 10000,
       "on_failure": "warn"
+    },
+    "MemorySync": {
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/memory-sync.ps1",
+      "posix_command": "sh ./scripts/hooks/memory-sync.sh",
+      "timeout_ms": 10000,
+      "on_failure": "warn"
     }
   }
 }

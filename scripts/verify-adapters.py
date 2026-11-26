@@ -6,7 +6,7 @@ same canonical capabilities:
 
   * rules          -> references AGENTS.md (or the shared rule files)
   * MCP            -> the canonical server invocations (graphify / ui-registry / headroom)
-  * hooks          -> protect-config / rtk-filter / session-start
+  * hooks          -> protect-config / rtk-filter / session-start / memory-sync
   * slash commands -> the 8 canonical commands distributed from .agents/commands/
   * skills         -> a junction that RESOLVES into .agents/skills (or native access)
 
@@ -54,6 +54,7 @@ HOOK_MARKERS = {
     "protect-config": "protect-config",
     "rtk-filter": "rtk-filter",
     "session-start": "session-start",
+    "memory-sync": "memory-sync",
 }
 
 
@@ -266,11 +267,12 @@ def check_hooks(adapter: dict) -> list[str]:
         blob = "\n".join(
             [p.name + "\n" + read(p) for p in sorted(plugin_dir.glob("*.js"))]
         )
-        # OpenCode expresses the same three hooks as plugins.
+        # OpenCode expresses the same hooks as plugins.
         opencode_markers = {
             "protect-config": "config-protection",
             "rtk-filter": "rtk-interceptor",
             "session-start": "session-start",
+            "memory-sync": "memory-sync",
         }
         for hook, marker in opencode_markers.items():
             if marker not in blob:

@@ -14,6 +14,11 @@
       "event": "SessionStart",
       "command": "node ./scripts/hooks/run-hook.mjs session-start",
       "on_failure": "continue"
+    },
+    {
+      "event": "SessionStart",
+      "command": "node ./scripts/hooks/run-hook.mjs memory-sync",
+      "on_failure": "continue"
     }
   ]
 }

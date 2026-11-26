@@ -95,6 +95,20 @@ if [ -d "${HOOKS_DIR}" ]; then
             TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
         fi
     fi
+
+    # The claude-mem hook used to be a mkdir+echo stub that no adapter ever
+    # registered, so it "passed" every check while persisting nothing. It is
+    # now exercised for real: it must recall the episodic store without
+    # failing.
+    MEMORY_HOOK="${HOOKS_DIR}/memory-sync.sh"
+    if [ -f "${MEMORY_HOOK}" ]; then
+        if MEM_OUT="$(bash "${MEMORY_HOOK}" 2>&1)" && echo "${MEM_OUT}" | grep -q "\[MEMORY\]"; then
+            echo "[PASS] memory-sync.sh recalled the episodic store"
+        else
+            echo "[FAIL] memory-sync.sh did not report the episodic store"
+            TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+        fi
+    fi
 fi
 
 echo ""

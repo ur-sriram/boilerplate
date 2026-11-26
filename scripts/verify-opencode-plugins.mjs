@@ -37,6 +37,7 @@ const REQUIRED_HOOKS = {
   'ponytail-compactor.js': 'tool.execute.before',
   'rtk-interceptor.js': 'tool.execute.after',
   'session-start.js': 'event',
+  'memory-sync.js': 'event',
 };
 
 const failures = [];
@@ -156,6 +157,12 @@ async function exercise(file, hooks) {
     await expectNoThrow(() => onEvent({ event: { type: 'session.created' } }), 'session-start: session event must not throw');
     await expectNoThrow(() => onEvent({ event: { type: 'file.edited' } }), 'session-start: unrelated event must not throw');
   }
+
+  if (file === 'memory-sync.js') {
+    const onEvent = hooks.event;
+    await expectNoThrow(() => onEvent({ event: { type: 'session.created' } }), 'memory-sync: session event must not throw');
+    await expectNoThrow(() => onEvent({ event: { type: 'file.edited' } }), 'memory-sync: unrelated event must not throw');
+  }
 }
 
 console.log('OpenCode plugin contract verification');
@@ -176,7 +183,7 @@ if (files.length === 0) {
 
 for (const file of files) {
   const before = failures.length;
-  let hooks = null;
+  let hooks;
   try {
     hooks = await checkPlugin(file);
     await exercise(file, hooks);

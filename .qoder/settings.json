@@ -63,6 +63,7 @@
   "hooks": {
     "PreToolUse": "node ./scripts/hooks/run-hook.mjs protect-config",
     "PostToolUse": "node ./scripts/hooks/run-hook.mjs rtk-filter",
-    "SessionStart": "node ./scripts/hooks/run-hook.mjs session-start"
+    "SessionStart": "node ./scripts/hooks/run-hook.mjs session-start",
+    "MemorySync": "node ./scripts/hooks/run-hook.mjs memory-sync"
   }
 }

@@ -52,7 +52,12 @@ Goose implements lifecycle interception through the Open Plugins specification:
     },
     {
       "event": "SessionStart",
-      "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/hooks/session-start.ps1",
+      "command": "node ./scripts/hooks/run-hook.mjs session-start",
+      "on_failure": "continue"
+    },
+    {
+      "event": "SessionStart",
+      "command": "node ./scripts/hooks/run-hook.mjs memory-sync",
       "on_failure": "continue"
     }
   ]
@@ -60,7 +65,7 @@ Goose implements lifecycle interception through the Open Plugins specification:
 ```
 
 - **PreToolUse**: Evaluates the tool target; terminates the call with exit code 1 if the target falls outside the project directory.
-- **SessionStart**: Validates local prerequisites (Git, Node, Python, PowerShell/Bash).
+- **SessionStart**: Validates local prerequisites (Git, Node, Python, PowerShell/Bash), and recalls the project's episodic memory (claude-mem).
 
 ## 5. Verification
 
