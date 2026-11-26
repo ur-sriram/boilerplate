@@ -42,17 +42,47 @@ Write-Host "================================================="
 $Extensions = @(".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".ps1", ".sh")
 
 # Folders excluded from the scan (identical list in both twins).
-$ExcludeFolders = @("node_modules", ".git", "__pycache__", ".specify", "skills", "dist", "build")
+$ExcludeFolders = @("node_modules", ".cache", ".git", "__pycache__", ".specify", "skills", "dist", "build", ".venv", "venv", "env", "ENV", ".pytest_cache", "sandbox", ".sandbox")
 
-$Files = Get-ChildItem -Path $ResolvedTarget -Recurse -File | Where-Object {
-    $file = $_
-    $ext = $file.Extension.ToLower()
-    if ($Extensions -notcontains $ext) { return $false }
+# Enumerate repository files WITHOUT descending into the excluded directories.
+#
+# `Get-ChildItem -Recurse` followed by a `Where-Object` filter still WALKS
+# every file inside node_modules and the project-local .cache/ tree (the uv
+# and npm package caches - hundreds of thousands of files), which made these
+# suites take minutes instead of seconds. The POSIX twin uses `find -prune`
+# for the same reason; the exclusion lists must stay identical.
+function Get-RepoFiles {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][string[]]$Excludes
+    )
 
-    foreach ($exclude in $ExcludeFolders) {
-        if ($file.FullName -like "*\$exclude\*") { return $false }
+    $results = New-Object System.Collections.Generic.List[System.IO.FileInfo]
+    $stack = New-Object System.Collections.Stack
+    $stack.Push($Root)
+
+    while ($stack.Count -gt 0) {
+        $dir = $stack.Pop()
+        try {
+            foreach ($item in Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue) {
+                if ($item.PSIsContainer) {
+                    if ($Excludes -notcontains $item.Name -and $item.Name -notlike "boilerplate_smoke_*") {
+                        $stack.Push($item.FullName)
+                    }
+                } elseif ($item.Name -notlike "boilerplate_smoke_*") {
+                    $results.Add($item)
+                }
+            }
+        } catch {
+            # Unreadable directory: skip it rather than fail the suite.
+        }
     }
-    return $true
+
+    return $results
+}
+
+$Files = Get-RepoFiles -Root $ResolvedTarget -Excludes $ExcludeFolders | Where-Object {
+    $Extensions -contains $_.Extension.ToLower()
 }
 
 # Count "effective" lines: non-blank and not a comment-only line.

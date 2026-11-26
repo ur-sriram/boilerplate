@@ -2,7 +2,7 @@
 
 > **Layer 2 Modular Rule** | Scope: All agents utilizing Model Context Protocol (MCP) servers | Enforced across repository
 
-This document establishes the strict operational guidelines for utilizing MCP tools without causing catastrophic token burn in model context windows, following the [Cloudflare Agents Code Mode Architecture](https://github.com/cloudflare/agents/blob/main/docs/codemode/index.md).
+This document establishes the strict operational guidelines for utilizing MCP tools without causing catastrophic token burn in model context windows, following the [Cloudflare Agents CodeMode Architecture](https://github.com/cloudflare/agents/blob/main/docs/codemode/index.md).
 
 ---
 
@@ -17,16 +17,27 @@ Exposing dozens of monolithic MCP tool schemas directly to LLM prompts introduce
 
 ## 2. The CodeMode Solution & Mandatory Rules
 
-All agents operating in this repository must adhere to the following 3 CodeMode principles:
-
 ### Rule 1: Dynamic MCP Profiles (Default Minimal Context)
 - Never enable all MCP servers globally at all times.
-- Keep the default MCP profile locked to `core` (<= 350 tokens: graphify, filesystem).
-- Activate domain MCP servers on-demand only when a task strictly requires them using `scripts/mcp-profile.{ps1,sh}`:
-  ```powershell
-  # Toggles only UI registries when doing frontend work:
+- Keep the default MCP profile locked to `core` (<= 350 tokens: the `graphify` server only).
+- Activate domain MCP servers on-demand only when a task strictly requires them using `scripts/mcp-profile.{sh,ps1}`, which updates **all nine** adapter MCP configs at once:
+
+  ```bash
+  # POSIX - toggles only the UI registries when doing frontend work:
+  ./scripts/mcp-profile.sh ui
+
+  # Windows - same switcher, same effect:
   powershell -ExecutionPolicy Bypass -File ./scripts/mcp-profile.ps1 -Profile ui
+
+  # Inspect what is currently active, in every adapter:
+  ./scripts/mcp-profile.sh --status
   ```
+
+  Valid profiles: `core` (default), `ui`, `compression`, `all`.
+
+  > There is no `filesystem` MCP server in this repository. An earlier
+  > revision of this rule advertised the core profile as "graphify,
+  > filesystem"; only `graphify` is configured.
 
 ### Rule 2: Programmatic Execution Over Serial Tool Calls
 - When performing multi-step data lookups, querying databases, or searching registries, **write a compact script** (Node.js, TypeScript, or Python) to call the tool API/server directly.
@@ -35,6 +46,18 @@ All agents operating in this repository must adhere to the following 3 CodeMode 
 
 ### Rule 3: Schema Inspection on Demand
 - Rather than loading full tool schemas into system prompts, inspect tool signatures on demand via CLI help or targeted schema inspection when authoring an integration script.
+- `scripts/verify-mcp-servers.py` prints the live tool list for every configured server, which is the cheapest way to see the real schema.
+
+### Rule 4: A Configured Server Is Not A Working Server
+- Every MCP server that this repository configures must be **proven to boot** before it is trusted. A server entry in a config file proves nothing: the Graphify entry was configured in all nine adapters while crashing on startup with `ModuleNotFoundError: No module named 'mcp'`, because the package was installed without its `mcp` extra.
+- After changing any MCP invocation, run:
+
+  ```bash
+  python3 scripts/verify-mcp-servers.py
+  ```
+
+  It launches each server, completes the MCP handshake, and lists the tools it exposes. A server that cannot start fails the check.
+- Use the **live tool names** from that output in rules and skills. Do not invent tool names: `search_graph`, `trace_path`, `get_code_snippet` and `get_architecture` do not exist in the Graphify server.
 
 ---
 

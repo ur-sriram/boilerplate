@@ -77,6 +77,7 @@ run_suite "6. test-bootstrap" "bash '${SCRIPT_DIR}/test-bootstrap.sh'"
 # 7. skills-index drift check (the wiring map must match the store on disk)
 # 8. adapter parity check (every agent gets the same capabilities)
 # 9. Spec Kit vendored-file integrity
+# 10. OpenCode plugin contract (the loader rejects a plugin without an `id`)
 if [ -n "${PYTHON_CMD:-${PYTHON_BIN:-}}" ]; then
     PY_EXEC="${PYTHON_CMD:-${PYTHON_BIN}}"
     run_suite "7. skills-index" "'${PY_EXEC}' '${SCRIPT_DIR}/generate-skills-index.py' --check"
@@ -84,6 +85,21 @@ if [ -n "${PYTHON_CMD:-${PYTHON_BIN:-}}" ]; then
     run_suite "9. specify-integrity" "'${PY_EXEC}' '${SCRIPT_DIR}/verify-specify-integrity.py'"
 else
     echo "[WARN] Python not found; skipping skills-index and adapter checks"
+fi
+
+# 10. OpenCode plugin contract.
+#     OpenCode loads .opencode/plugins/*.js as path plugins and rejects any
+#     module whose default export has no `id`, so every hook in that file
+#     silently stops firing. This suite asserts the contract and exercises
+#     each guardrail with mock tool calls.
+if command -v node >/dev/null 2>&1; then
+    # --disable-warning silences MODULE_TYPELESS_PACKAGE_JSON: OpenCode writes a
+    # minimal .opencode/package.json (no "type": "module") when it installs
+    # its own plugin dependency, and Node then warns while importing the ESM
+    # plugins. The plugins load correctly either way.
+    run_suite "10. opencode-plugins" "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON '${SCRIPT_DIR}/verify-opencode-plugins.mjs'"
+else
+    echo "[WARN] Node not found; skipping the OpenCode plugin contract check"
 fi
 
 echo ""

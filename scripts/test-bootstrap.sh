@@ -17,8 +17,19 @@ echo "[INFO] Source repository: ${PROJECT_ROOT}"
 
 TOTAL_ERRORS=0
 
-# Create isolated temporary sandbox directory
-SANDBOX_DIR="$(mktemp -d /tmp/boilerplate_smoke_XXXXXX 2>/dev/null || mktemp -d -t 'boilerplate_smoke_XXXXXX')"
+# Create an isolated sandbox directory.
+#
+# The sandbox MUST live outside the repository (it contains a copy of the
+# repository, so a sandbox inside it would recurse). It therefore uses the
+# system temp directory, which is the single documented exception to the
+# "writes stay inside the project" rule — the sandbox is deleted on exit.
+# Set BOILERPLATE_SANDBOX_ROOT to place it elsewhere.
+if [ -n "${BOILERPLATE_SANDBOX_ROOT:-}" ]; then
+    SANDBOX_DIR="${BOILERPLATE_SANDBOX_ROOT}/boilerplate_smoke_$$"
+    mkdir -p "${SANDBOX_DIR}"
+else
+    SANDBOX_DIR="$(mktemp -d /tmp/boilerplate_smoke_XXXXXX 2>/dev/null || mktemp -d -t 'boilerplate_smoke_XXXXXX')"
+fi
 echo "[INFO] Created isolated sandbox directory: ${SANDBOX_DIR}"
 
 PYTHON_BIN=""
@@ -69,11 +80,22 @@ echo "[INFO] Snapshotted ${SNAPSHOT_COUNT} external file reference(s)."
 echo ""
 echo "--- Replicating Repository into Isolated Sandbox ---"
 mkdir -p "${SANDBOX_DIR}/repo"
-cp -R "${PROJECT_ROOT}"/* "${SANDBOX_DIR}/repo/" 2>/dev/null || true
-# Copy dotfiles
-cp -R "${PROJECT_ROOT}"/.[!.]* "${SANDBOX_DIR}/repo/" 2>/dev/null || true
-# Clean internal excludes
-rm -rf "${SANDBOX_DIR}/repo/.git" "${SANDBOX_DIR}/repo/node_modules" "${SANDBOX_DIR}/repo/.venv" "${SANDBOX_DIR}/repo/__pycache__" 2>/dev/null || true
+# Copy the repository into the sandbox.
+#
+# The copy EXCLUDES the project-local caches (`.cache/`), the VCS metadata and
+# installed dependencies. The previous revision used `cp -R` followed by
+# `rm -rf`, which copied the entire uv/npm cache - hundreds of megabytes and
+# hundreds of thousands of files - into the sandbox before deleting it, and
+# made this suite unusably slow. Excluding at copy time also keeps the
+# sandbox free of another project-local cache tree.
+tar -C "${PROJECT_ROOT}" \
+    --exclude='./.git' \
+    --exclude='./.cache' \
+    --exclude='./node_modules' \
+    --exclude='./.venv' \
+    --exclude='./venv' \
+    --exclude='./__pycache__' \
+    -cf - . 2>/dev/null | tar -C "${SANDBOX_DIR}/repo" -xf - 2>/dev/null || true
 echo "[OK] Sandbox repository populated."
 
 # ----------------------------------------------------------------------
@@ -192,11 +214,23 @@ fi
 echo ""
 echo "--- Assertion 3: AGENTS.md Size & Token Budget Limits ---"
 AGENTS_FILE="${SANDBOX_DIR}/repo/AGENTS.md"
+MAX_AGENTS_LINES=120
+MAX_AGENTS_CHARS=9000
 if [ -f "${AGENTS_FILE}" ]; then
     LINE_COUNT="$(wc -l < "${AGENTS_FILE}" | tr -d ' ')"
     CHAR_COUNT="$(wc -c < "${AGENTS_FILE}" | tr -d ' ')"
-    echo "[INFO] AGENTS.md metrics: ${LINE_COUNT} lines, ${CHAR_COUNT} characters (Uncapped single source of truth)."
-    echo "[PASS] AGENTS.md verified cleanly as Universal Core Index."
+    echo "[INFO] AGENTS.md metrics: ${LINE_COUNT} lines, ${CHAR_COUNT} characters (budget: ${MAX_AGENTS_LINES} lines / ${MAX_AGENTS_CHARS} chars)."
+    # The budget is ENFORCED, not merely reported. AGENTS.md is loaded into
+    # every agent turn, so an unbounded file silently inflates every request.
+    if [ "${LINE_COUNT}" -gt "${MAX_AGENTS_LINES}" ]; then
+        echo "[FAIL] AGENTS.md is ${LINE_COUNT} lines (max ${MAX_AGENTS_LINES}). Move detail into .agents/rules/."
+        TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+    elif [ "${CHAR_COUNT}" -gt "${MAX_AGENTS_CHARS}" ]; then
+        echo "[FAIL] AGENTS.md is ${CHAR_COUNT} characters (max ${MAX_AGENTS_CHARS}). Move detail into .agents/rules/."
+        TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+    else
+        echo "[PASS] AGENTS.md within budget (${LINE_COUNT}/${MAX_AGENTS_LINES} lines, ${CHAR_COUNT}/${MAX_AGENTS_CHARS} chars)."
+    fi
 else
     echo "[FAIL] AGENTS.md missing in sandbox repo!"
     TOTAL_ERRORS=$((TOTAL_ERRORS + 1))

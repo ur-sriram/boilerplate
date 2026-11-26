@@ -4,17 +4,27 @@
       "command": "uvx",
       "args": [
         "--from",
-        "graphifyy",
+        "graphifyy[mcp]",
         "graphify-mcp"
       ],
       "disabled": false,
       "autoApprove": [
-        "search_graph",
-        "trace_path",
-        "get_code_snippet",
         "query_graph",
-        "get_architecture"
-      ]
+        "get_node",
+        "get_neighbors",
+        "shortest_path",
+        "get_section",
+        "god_nodes",
+        "graph_stats"
+      ],
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "ui-registry": {
       "command": "npx",
@@ -25,11 +35,20 @@
       "disabled": true,
       "autoApprove": [
         "list_registries",
+        "list_components",
         "search_components",
         "get_component",
         "compare_components",
         "check_consistency"
-      ]
+      ],
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "headroom": {
       "command": "uvx",
@@ -41,7 +60,15 @@
         "serve"
       ],
       "disabled": true,
-      "autoApprove": []
+      "autoApprove": [],
+      "env": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     }
   }
 }

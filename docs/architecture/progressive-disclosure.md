@@ -13,7 +13,7 @@ Total Model Context Window (128k - 200k tokens)
 ┌────────────────────────────────────────────────────────────────────────┐
 │ LAYER 1: Always-On Core (Loaded on Every Turn)                         │
 │ • AGENTS.md: Root index, Karpathy invariants, pointer table            │
-│ • Hard budget: <= 120 lines / <= 4,000 characters (<= 1,000 tokens)    │
+│ • Hard budget: ≤ 120 lines / ≤ 9,000 characters (≈ 2,200 tokens)   │
 │ • Default MCP schemas: Core Profile only (<= 350 tokens)               │
 │ • Total Layer 1 baseline: <= 1,350 tokens                              │
 └────────────────────────────────────┬───────────────────────────────────┘
@@ -44,7 +44,7 @@ The following table catalogs the strict token boundaries enforced across all lay
 
 | Component | Layer | File Path | Token Budget | Enforced Constraint |
 |---|---|---|---|---|
-| **Always-On Core Index** | Layer 1 | `AGENTS.md` | **<= 1,000 tokens** | Max 120 lines, <= 4,000 chars; verified by `test-bootstrap.ps1` |
+| **Always-On Core Index** | Layer 1 | `AGENTS.md` | **≈ 2,200 tokens** | Max 120 lines, <= 9,000 chars; **enforced** by `test-bootstrap.sh` / `.ps1` |
 | **Core MCP Schemas (Default)** | Layer 1 | `graphify` via `mcp_config.json` | **~350 tokens** | Only AST exploration tool enabled on startup |
 | **Project Boundary Rules** | Layer 1 | `.aiignore` / `.gitignore` | ~100 tokens | Pure glob patterns; zero prose |
 | **Core Invariants Rule** | Layer 2 | `.agents/rules/core-invariants.md` | ~250 tokens | Triggered on code edit or task initiation |

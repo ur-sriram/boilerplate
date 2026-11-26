@@ -17,20 +17,38 @@ Agents must NOT:
 
 ## 2. Mandatory Graphify AST Knowledge Graph Protocol
 
-All agents must utilize `Graphify` (`Graphify-Labs/graphify` / `codebase-memory-mcp`) to inspect and navigate repository topology deterministically:
+All agents must utilize `Graphify` (`Graphify-Labs/graphify`, installed as the
+`graphifyy[mcp]` package) to inspect and navigate repository topology
+deterministically.
+
+> **Tool names below were verified against the running server.** An earlier
+> revision of this rule listed `search_graph`, `trace_path`, `get_code_snippet`
+> and `get_architecture`. None of those tools exist in the Graphify MCP
+> server - they belong to a different project (`DeusData/codebase-memory-mcp`).
+> Calling them was guaranteed to fail. The list below is what the server
+> actually exposes; re-verify it with `python3 scripts/verify-mcp-servers.py`
+> after any Graphify upgrade.
 
 ### Priority Order for Code Discovery
-1. `search_graph`: Find functions, classes, interfaces, and routes by regex or symbol name.
-2. `trace_path`: Trace caller hierarchy (inbound) or dependency call chains (outbound).
-3. `get_code_snippet`: Retrieve exact source blocks for qualified symbols without reading entire monolithic files.
-4. `query_graph`: Execute Cypher AST queries for complex architectural patterns.
-5. `get_architecture`: Generate high-level system summaries and module relationships.
+1. `query_graph`: Search the knowledge graph (BFS or DFS) for symbols, concepts and relationships. This is the primary discovery tool.
+2. `get_node`: Get full details for one node, by label or by ID.
+3. `get_neighbors`: List a node's direct neighbours, with the connecting edges.
+4. `shortest_path`: Find the shortest path between two concepts (`undirected=true` ignores stored edge direction).
+5. `get_section`: Return the text of a Markdown section (heading node plus its subsections) or a whole Markdown page, straight from the source file.
+6. `god_nodes`: Return the most connected nodes - the core abstractions of the graph.
+7. `graph_stats`: Node count, edge count, community count and confidence breakdown.
+
+### Pull Request Triage
+`list_prs`, `get_pr_impact` and `triage_prs` report which knowledge-graph
+communities a pull request touches. Use `triage_prs` when asked what to review
+or what is ready to merge; use `get_pr_impact` to assess merge risk or
+overlap with work in progress.
 
 ### Fallback to Regex / Grep
 Only fall back to grep when:
 - Searching for raw string literals, error log messages, or configuration values.
 - Inspecting non-code configuration files (`.json`, `.yaml`, `.toml`, `.env.example`).
-- Graphify MCP tools return insufficient results for an unindexed asset.
+- Graphify MCP tools return insufficient results for an unindexed asset - for example a file added since the graph was last built.
 
 ---
 

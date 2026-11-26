@@ -30,15 +30,25 @@ Beginner friendly: if you can copy a command, you can use this.
 |---|---|---|
 | 🧠 | **377 skills, each with a "how to use it" rule** | Instead of your agent improvising, it loads a proven workflow (TDD, debugging, code review, UI polish, git safety…). Every skill is listed with its governing rule in [`.agents/rules/skills-index.md`](.agents/rules/skills-index.md). |
 | 📏 | **Project rules that load on demand** | 7 short rule files instead of one giant prompt. Your agent reads only the ones the task needs, so it stays fast. |
-| 🛡️ | **Guardrails that actually run** | A hook blocks any file write outside the project folder, on Windows, macOS and Linux. |
+| 🛡️ | **Guardrails that actually run** | A hook blocks any file write outside the project folder, on Windows, macOS and Linux — and the project's own package caches stay inside the project too. |
 | 📝 | **Plan before you code** | Spec-driven templates (`.specify/`) plus 8 slash commands like `/plan` and `/tdd` turn "build me X" into a written spec, plan and task list. |
 | 🧩 | **Works with 13 AI agents** | Claude Code, Cursor, Codex, Copilot, OpenCode, Junie, Kimi, Goose, Qoder, Windsurf, Cline, Antigravity, Freebuff — same rules, same skills, same commands in each. 12 of them are checked automatically by `scripts/verify-adapters.py`. |
 | ✅ | **A test suite that checks the repo itself** | 9 checks run in seconds: scripts parse, links resolve, files are under 400 lines, every agent has the same capabilities, the skill map is current. If something drifts, you find out immediately. |
 | 🚧 | **Sensible defaults for quality** | Strict TypeScript, a 400-line file cap, TDD as the default, a 4-step UI pipeline, and a "no secrets, no global writes" constitution. |
 
 **What it deliberately does NOT do:** touch your global config. Nothing is
-written to `~/.claude`, `%APPDATA%`, `~/.config` or anywhere outside the
-project folder. Everything is reversible — delete the folder and it's gone.
+written to `~/.claude`, `%APPDATA%`, `~/.config`, `~/.cache` or anywhere
+outside the project folder — not even the package caches:
+
+- every MCP server is pinned to the project-local `.cache/` directory
+  (`UV_CACHE_DIR`, `UV_DATA_DIR`, `UV_TOOL_DIR`, `XDG_*`, `npm_config_cache`),
+- `npm install` uses the project `.npmrc`, so even npm's cache stays in,
+- the one exception is the self-test sandbox, which lives in the system temp
+  directory and is deleted when the run ends.
+
+This is verified, not just claimed: `scripts/verify-adapters.py` fails the
+build if any adapter's MCP servers stop pinning the project-local cache.
+Everything is reversible — delete the folder and it's gone.
 
 ---
 
@@ -118,7 +128,7 @@ from then on the rules, skills and commands are available.
 1. Describe what you want     →  "Add a dark mode toggle"
 2. Agent plans it              →  /plan  (writes spec.md, plan.md, tasks.md)
 3. Agent builds it             →  /tdd   (failing test first, then code)
-4. Agent checks itself         →  /verify (runs all 9 suites)
+4. Agent checks itself         →  /verify (runs all 10 suites)
 5. Agent reviews the diff      →  /review
 ```
 
@@ -130,7 +140,7 @@ You are an AI coding agent working in this repository.
 1. Read `AGENTS.md` at the project root first — it is the short index of every
    rule and skill you should use.
 2. Run `./scripts/verify-all.sh` (or `verify-all.cmd` on Windows) before you
-   start. All 9 suites must pass.
+   start. All 10 suites must pass.
 3. Before writing code for a new feature, run `/plan`. It creates the spec,
    plan and task files under `specs/<number>-<name>/`.
 4. For implementation, use `/tdd` — write a failing test first, watch it fail,
@@ -283,6 +293,14 @@ On Windows: `powershell -ExecutionPolicy Bypass -File ./scripts/mcp-profile.ps1 
 
 The switcher updates **every** agent's config at once, so they never disagree.
 
+A configured server is not a working server — one entry sat in all nine
+configs for months while crashing on startup. Prove they boot:
+
+```bash
+python3 scripts/verify-mcp-servers.py           # boot every server, list its tools
+python3 scripts/verify-mcp-servers.py graphify  # just one
+```
+
 ### The project constitution (your rules of the house)
 
 [`.specify/memory/constitution.md`](.specify/memory/constitution.md) holds the
@@ -328,6 +346,7 @@ Two habits worth keeping:
 | "Skill wiring" check fails after adding a skill | Run `python3 scripts/generate-skills-index.py` to regenerate the index |
 | "Adapter parity" check fails | Run `python3 scripts/verify-adapters.py` — it prints exactly which adapter lost what |
 | Agent ignores the 400-line limit | Make sure `npm install` has been run so ESLint is available |
+| `~/.npm` or `~/.cache` grows after setup | The project-local cache env was dropped from an adapter config — run `python3 scripts/verify-adapters.py` to find which one |
 | Everything feels slow / context too big | Switch back to the core MCP profile: `./scripts/mcp-profile.sh core` |
 | Hook blocks a write you expected to be allowed | The path resolved outside the project root — check whether it is a symlink; the guardrail compares physical paths |
 | `npm test` finds no tests | Tests live in `src/features/**/*.test.ts` — add one per feature |

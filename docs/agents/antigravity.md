@@ -76,22 +76,22 @@ Antigravity executes cross-platform lifecycle hooks defined in `.antigravity/hoo
 
 ## 4. Native Stdio MCP Mappings (`.antigravity/mcp_config.json`)
 
-By default, the Core profile is active: `graphify` is enabled to provide AST knowledge graph search (`search_graph`, `trace_path`, `get_code_snippet`, `query_graph`). `ui-registry` and `headroom` are disabled by default:
+By default, the Core profile is active: `graphify` is enabled to provide AST knowledge graph search (`query_graph`, `get_node`, `get_neighbors`, `shortest_path`, `get_section`, `god_nodes`, `graph_stats`). `ui-registry` and `headroom` are disabled by default:
 
 ```json
 {
   "mcpServers": {
     "graphify": {
       "command": "uvx",
-      "args": ["--from", "graphifyy", "graphify-mcp"],
+      "args": ["--from", "graphifyy[mcp]", "graphify-mcp"],
       "disabled": false,
-      "autoApprove": ["search_graph", "trace_path", "get_code_snippet", "query_graph", "get_architecture"]
+      "autoApprove": ["query_graph", "get_node", "get_neighbors", "shortest_path", "get_section", "god_nodes", "graph_stats"]
     },
     "ui-registry": {
       "command": "npx",
       "args": ["-y", "ui-registry-mcp@0.7.1"],
       "disabled": true,
-      "autoApprove": ["list_registries", "search_components", "get_component", "compare_components", "check_consistency"]
+      "autoApprove": ["list_registries", "list_components", "search_components", "get_component", "compare_components", "check_consistency"]
     },
     "headroom": {
       "command": "uvx",

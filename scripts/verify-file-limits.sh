@@ -23,20 +23,23 @@ if [ -n "${1:-}" ]; then
 fi
 
 # Extensions scanned (identical list in both twins).
-# NOTE: the -not -path patterns MUST stay quoted, otherwise the shell expands
-# them against the working directory and find() silently scans nothing.
+#
+# The excluded directories are PRUNED, not merely filtered with `-not -path`.
+# `-not -path` only suppresses the *output*; `find` still walks every file
+# inside node_modules and the project-local .cache/ tree, which holds the
+# uv and npm package caches (hundreds of thousands of files). That made this
+# suite take minutes instead of seconds.
 find_files() {
-    find "$ROOT_DIR" -type f \
-        \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
+    find "$ROOT_DIR" \
+        \( -type d \( -name "node_modules" -o -name ".cache" -o -name ".git" \
+           -o -name "__pycache__" -o -name ".specify" -o -name "skills" \
+           -o -name "dist" -o -name "build" -o -name ".venv" -o -name "venv" \
+           -o -name "env" -o -name "ENV" -o -name ".pytest_cache" \
+           -o -name "sandbox" -o -name ".sandbox" \) -prune \) \
+        -o \( -type f \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
            -o -name "*.mjs" -o -name "*.cjs" -o -name "*.py" -o -name "*.ps1" -o -name "*.sh" \) \
-        -not -path "*/node_modules/*" \
-        -not -path "*/.git/*" \
-        -not -path "*/__pycache__/*" \
-        -not -path "*/.specify/*" \
-        -not -path "*/skills/*" \
-        -not -path "*/dist/*" \
-        -not -path "*/build/*" \
-        -print0 2>/dev/null
+           -print0 \) \
+        2>/dev/null
 }
 
 # Count "effective" lines: non-blank and not a comment-only line.
@@ -57,24 +60,23 @@ count_effective_lines() {
     ' "$1"
 }
 
-VIOLATION_LIST="$(mktemp)"
-trap 'rm -f "$VIOLATION_LIST"' EXIT
-
-SCANNED=0
-find_files | while IFS= read -r -d '' file; do
-    SCANNED=$((SCANNED + 1))
+# NOTE: the previous revision wrote its violation list to `mktemp`, i.e. into
+# the system temp directory — the only write this repository performed outside
+# the project folder during a verification run. The list is now held in a
+# shell variable so the run touches nothing outside the project.
+VIOLATIONS="$(find_files | while IFS= read -r -d '' file; do
     LINES=$(count_effective_lines "$file")
     if [ "$LINES" -gt "$MAX_LINES" ]; then
-        printf '%s|%s\n' "${file#${ROOT_DIR}/}" "$LINES" >> "$VIOLATION_LIST"
+        printf '%s|%s\n' "${file#${ROOT_DIR}/}" "$LINES"
     fi
-done
+done)"
 
 SCANNED=$(find_files | tr -cd '\0' | wc -c | tr -d ' ')
 
-if [ -s "$VIOLATION_LIST" ]; then
-    while IFS='|' read -r path lines; do
+if [ -n "$VIOLATIONS" ]; then
+    printf '%s\n' "$VIOLATIONS" | while IFS='|' read -r path lines; do
         [ -n "$path" ] && echo "[FAIL] $path ($lines effective lines > $MAX_LINES)"
-    done < "$VIOLATION_LIST"
+    done
     echo "Files scanned: $SCANNED"
     echo "[FAIL] File line limit verification failed."
     exit 1

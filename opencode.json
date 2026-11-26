@@ -6,41 +6,58 @@
   "mcp": {
     "graphify": {
       "type": "local",
-      "command": "uvx",
-      "args": [
+      "command": [
+        "uvx",
         "--from",
-        "graphifyy",
+        "graphifyy[mcp]",
         "graphify-mcp"
       ],
-      "enabled": true
+      "enabled": true,
+      "environment": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "ui-registry": {
       "type": "local",
-      "command": "npx",
-      "args": [
+      "command": [
+        "npx",
         "-y",
         "ui-registry-mcp@0.7.1"
       ],
-      "enabled": false
+      "enabled": false,
+      "environment": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     },
     "headroom": {
       "type": "local",
-      "command": "uvx",
-      "args": [
+      "command": [
+        "uvx",
         "--from",
         "headroom-ai[mcp]",
         "headroom",
         "mcp",
         "serve"
       ],
-      "enabled": false
+      "enabled": false,
+      "environment": {
+        "UV_CACHE_DIR": ".cache/uv",
+        "UV_DATA_DIR": ".cache/uv-data",
+        "UV_TOOL_DIR": ".cache/uv-tools",
+        "XDG_CACHE_HOME": ".cache",
+        "XDG_DATA_HOME": ".cache/xdg-data",
+        "npm_config_cache": ".cache/npm"
+      }
     }
-  },
-  "plugins": [
-    "./.opencode/plugins/config-protection.js",
-    "./.opencode/plugins/rtk-interceptor.js",
-    "./.opencode/plugins/headroom-guard.js",
-    "./.opencode/plugins/ponytail-compactor.js",
-    "./.opencode/plugins/session-start.js"
-  ]
+  }
 }
