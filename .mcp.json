@@ -4,7 +4,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "graphifyy",
+        "graphifyy[mcp]",
         "graphify-mcp"
       ],
       "description": "Codebase AST knowledge graph server for structural exploration",

@@ -17,6 +17,12 @@ echo "[INFO] Project root: ${PROJECT_ROOT}"
 
 TOTAL_ERRORS=0
 
+# The excluded directories are PRUNED, not merely filtered with `-not -path`.
+# `-not -path` only suppresses the *output*; `find` still walks every file
+# inside node_modules and the project-local .cache/ tree, which holds the uv
+# and npm package caches. That made this suite take minutes instead of
+# seconds.
+#
 # 1. Shell Script Validation via bash -n
 echo ""
 echo "--- Validating Shell Scripts via bash -n ---"
@@ -28,13 +34,12 @@ while IFS= read -r -d '' sh_file; do
         echo "[FAIL] ${rel_path} (Bash syntax error detected)"
         TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
     fi
-done < <(find "${PROJECT_ROOT}" -type f -name "*.sh" \
-    -not -path "*/node_modules/*" \
-    -not -path "*/.venv/*" \
-    -not -path "*/venv/*" \
-    -not -path "*/dist/*" \
-    -not -path "*/build/*" \
-    -print0)
+done < <(find "${PROJECT_ROOT}" \
+    \( -type d \( -name "node_modules" -o -name ".cache" -o -name ".git" \
+       -o -name "dist" -o -name "build" -o -name ".venv" -o -name "venv" \
+       -o -name "env" -o -name "ENV" -o -name "__pycache__" \
+       -o -name ".pytest_cache" -o -name "sandbox" -o -name ".sandbox" \) -prune \) \
+    -o \( -type f -name "*.sh" -print0 \))
 
 # 2. Python Script Validation via py_compile
 echo ""
@@ -55,13 +60,12 @@ if [ -n "${PYTHON_BIN}" ]; then
             echo "[FAIL] ${rel_path} (Compilation error)"
             TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
         fi
-    done < <(find "${PROJECT_ROOT}" -type f -name "*.py" \
-        -not -path "*/node_modules/*" \
-        -not -path "*/.venv/*" \
-        -not -path "*/venv/*" \
-        -not -path "*/dist/*" \
-        -not -path "*/build/*" \
-        -print0)
+    done < <(find "${PROJECT_ROOT}" \
+        \( -type d \( -name "node_modules" -o -name ".cache" -o -name ".git" \
+           -o -name "dist" -o -name "build" -o -name ".venv" -o -name "venv" \
+           -o -name "env" -o -name "ENV" -o -name "__pycache__" \
+           -o -name ".pytest_cache" -o -name "sandbox" -o -name ".sandbox" \) -prune \) \
+        -o \( -type f -name "*.py" -print0 \))
 else
     echo "[WARN] Python not found; skipping py_compile checks"
 fi

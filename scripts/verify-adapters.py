@@ -39,11 +39,16 @@ CANONICAL_COMMANDS = [
     "verify",
 ]
 
-CANONICAL_MCP = {
-    "graphify": ["--from", "graphifyy", "graphify-mcp"],
-    "ui-registry": ["-y", "ui-registry-mcp@0.7.1"],
-    "headroom": ["--from", "headroom-ai[mcp]", "headroom", "mcp", "serve"],
-}
+# The canonical MCP invocations and the per-vendor config schemas live in
+# scripts/adapter_mcp.py, so the parity verifier and the MCP smoke test
+# (scripts/verify-mcp-servers.py) can never disagree about what "correct"
+# means.
+from adapter_mcp import (  # noqa: E402
+    CANONICAL_MCP,
+    MCP_SCHEMAS,
+    REQUIRED_CACHE_ENV,
+    extract_mcp_entries,
+)
 
 HOOK_MARKERS = {
     "protect-config": "protect-config",
@@ -68,6 +73,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".claude/commands",
             "command_suffix": ".md",
             "mcp": ".mcp.json",
+            "mcp_schema": "claude",
             "mcp_required": True,
             "hooks": True,
         },
@@ -77,6 +83,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".opencode/commands",
             "command_suffix": ".toml",
             "mcp": "opencode.json",
+            "mcp_schema": "opencode",
             "mcp_required": True,
             "hooks": True,
         },
@@ -86,6 +93,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".cursor/commands",
             "command_suffix": ".md",
             "mcp": ".cursor/mcp.json",
+            "mcp_schema": "claude",
             "mcp_required": True,
             "hooks": False,
         },
@@ -95,6 +103,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".codex/prompts",
             "command_suffix": ".md",
             "mcp": ".codex/config.toml",
+            "mcp_schema": "codex",
             "mcp_required": True,
             "hooks": True,
         },
@@ -104,6 +113,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".qoder/commands",
             "command_suffix": ".md",
             "mcp": ".qoder/settings.json",
+            "mcp_schema": "claude",
             "mcp_required": True,
             "hooks": True,
         },
@@ -113,6 +123,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".kimi/commands",
             "command_suffix": ".md",
             "mcp": ".kimi-code/mcp.json",
+            "mcp_schema": "claude",
             "mcp_required": True,
             "hooks": False,
         },
@@ -122,6 +133,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".goose/commands",
             "command_suffix": ".md",
             "mcp": ".goose/config.yaml",
+            "mcp_schema": "goose",
             "mcp_required": True,
             "hooks": True,
         },
@@ -131,6 +143,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".antigravity/commands",
             "command_suffix": ".md",
             "mcp": ".antigravity/mcp_config.json",
+            "mcp_schema": "claude",
             "mcp_required": True,
             "hooks": True,
         },
@@ -167,6 +180,7 @@ def adapter_specs() -> list[dict]:
             "command_dir": ".github/prompts",
             "command_suffix": ".prompt.md",
             "mcp": ".mcp.json",
+            "mcp_schema": "claude",
             "mcp_required": True,
             "hooks": False,
         },
@@ -174,7 +188,15 @@ def adapter_specs() -> list[dict]:
 
 
 def check_mcp(adapter: dict) -> list[str]:
-    """Hard errors: a configured MCP server that drifts from the canonical one."""
+    """Verify each configured MCP server matches the canonical invocation.
+
+    The config is PARSED, not grepped. The previous revision did a substring
+    search, which cannot tell a correct config from one written in the wrong
+    schema - and a wrong schema is silently discarded by the runtime. OpenCode
+    shipped exactly that bug: its entries used `command`/`args`/`env` instead
+    of `command` (array) / `environment`, so every server was dropped by
+    OpenCode while the substring check still reported "OK".
+    """
     errors: list[str] = []
     mcp_path = adapter.get("mcp")
     if not mcp_path:
@@ -184,30 +206,21 @@ def check_mcp(adapter: dict) -> list[str]:
         errors.append(f"{adapter['name']}: MCP config '{mcp_path}' is missing")
         return errors
 
-    text = read(full)
+    entries, schema_errors = extract_mcp_entries(full, adapter["mcp_schema"])
+    for problem in schema_errors:
+        errors.append(f"{adapter['name']}: MCP config '{mcp_path}' {problem}")
+
     for server, expected in CANONICAL_MCP.items():
-        if server not in text:
+        entry = entries.get(server)
+        if entry is None:
             errors.append(f"{adapter['name']}: MCP server '{server}' missing from {mcp_path}")
             continue
-        for token in expected:
-            if token not in text:
-                errors.append(
-                    f"{adapter['name']}: MCP server '{server}' in {mcp_path} is missing "
-                    f"the canonical argument '{token}'"
-                )
+        if entry["argv"] != expected:
+            errors.append(
+                f"{adapter['name']}: MCP server '{server}' in {mcp_path} invokes "
+                f"{' '.join(entry['argv'])!r}, expected {' '.join(expected)!r}"
+            )
     return errors
-
-
-# Every MCP server must keep its package caches inside the project, so that
-# importing this boilerplate never writes to the user's home directory.
-REQUIRED_CACHE_ENV = {
-    "UV_CACHE_DIR",
-    "UV_DATA_DIR",
-    "UV_TOOL_DIR",
-    "XDG_CACHE_HOME",
-    "XDG_DATA_HOME",
-    "npm_config_cache",
-}
 
 
 def check_cache_isolation(adapter: dict) -> list[str]:
@@ -220,27 +233,14 @@ def check_cache_isolation(adapter: dict) -> list[str]:
     if not full.exists():
         return errors
 
-    if full.suffix == ".json":
-        data = json.loads(read(full))
-        container = data.get("mcpServers") or data.get("mcp") or {}
-        for name, entry in container.items():
-            if not isinstance(entry, dict):
-                continue
-            env = entry.get("env") or {}
-            missing = sorted(REQUIRED_CACHE_ENV - set(env))
-            if missing:
-                errors.append(
-                    f"{adapter['name']}: MCP server '{name}' in {mcp_path} does not pin "
-                    f"the project-local cache env ({', '.join(missing)})"
-                )
-    else:
-        text = read(full)
-        for key in REQUIRED_CACHE_ENV:
-            if key not in text:
-                errors.append(
-                    f"{adapter['name']}: {mcp_path} does not pin the project-local "
-                    f"cache env '{key}'"
-                )
+    entries, _ = extract_mcp_entries(full, adapter["mcp_schema"])
+    for name, entry in entries.items():
+        missing = sorted(REQUIRED_CACHE_ENV - set(entry["env"]))
+        if missing:
+            errors.append(
+                f"{adapter['name']}: MCP server '{name}' in {mcp_path} does not pin "
+                f"the project-local cache env ({', '.join(missing)})"
+            )
     return errors
 
 

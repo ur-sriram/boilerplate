@@ -96,6 +96,16 @@ $Suites = @(
         Type    = "python"
         Path    = (Join-Path $ScriptsDir "verify-specify-integrity.py")
         Desc    = "Vendored Spec Kit files match their recorded checksums"
+    },
+    @{
+        # OpenCode loads .opencode/plugins/*.js as path plugins and rejects any
+        # module whose default export has no `id`, so every hook in that file
+        # silently stops firing. This suite asserts the loader contract and
+        # exercises each guardrail with mock tool calls.
+        Name    = "10. opencode-plugins"
+        Type    = "node"
+        Path    = (Join-Path $ScriptsDir "verify-opencode-plugins.mjs")
+        Desc    = "OpenCode plugin loader contract and guardrail behaviour"
     }
 )
 
@@ -125,6 +135,13 @@ foreach ($suite in $Suites) {
             $exitCode = $LASTEXITCODE
         } elseif ($suite.Type -eq "python") {
             & python "$($suite.Path)" "$ProjectRoot"
+            $exitCode = $LASTEXITCODE
+        } elseif ($suite.Type -eq "node") {
+            # --disable-warning silences MODULE_TYPELESS_PACKAGE_JSON: OpenCode
+            # writes a minimal .opencode/package.json (no "type": "module") when
+            # it installs its own plugin dependency, and Node then warns while
+            # importing the ESM plugins. The plugins load correctly either way.
+            & node "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON" "$($suite.Path)"
             $exitCode = $LASTEXITCODE
         }
     }

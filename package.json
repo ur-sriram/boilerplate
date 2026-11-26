@@ -16,6 +16,8 @@
     "skills:index": "python3 scripts/generate-skills-index.py",
     "skills:check": "python3 scripts/generate-skills-index.py --check",
     "adapters:check": "python3 scripts/verify-adapters.py",
+    "plugins:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/verify-opencode-plugins.mjs",
+    "mcp:verify": "python3 scripts/verify-mcp-servers.py",
     "mcp:status": "python3 scripts/mcp-profile.py --status",
     "mcp:core": "python3 scripts/mcp-profile.py core",
     "mcp:ui": "python3 scripts/mcp-profile.py ui",

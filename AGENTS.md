@@ -34,8 +34,8 @@ Whenever creating or modifying web interfaces, agents MUST follow this sequentia
 
 - **File Length Limits**: Strict **maximum 400 lines** per file. Target range: **200 to 400 lines** for core feature modules. Enforced via `tsconfig.json`, `eslint.config.js`, and `scripts/verify-file-limits.{sh,ps1}`.
 - **Feature-Folder Architecture**: Organize all capabilities into dedicated vertical slices under `src/features/<feature-name>/` (following `src/features/_template/`).
-- **Codebase Exploration via Graphify**: NEVER guess or run naive whole-repo greps. Use `Graphify-Labs/graphify` (`search_graph`, `trace_path`, `get_code_snippet`, `query_graph`).
-- **Cloudflare CodeMode MCP Rule**: Avoid token burn from massive MCP tool schemas. Keep the default profile locked to `core` and execute programmatic scripts or on-demand profile switching (`scripts/mcp-profile.ps1 -Profile <core|ui|compression|all>`).
+- **Codebase Exploration via Graphify**: NEVER guess or run naive whole-repo greps. Use `Graphify-Labs/graphify` (`query_graph`, `get_node`, `get_neighbors`, `shortest_path`, `get_section`, `god_nodes`, `graph_stats`).
+- **Cloudflare CodeMode MCP Rule**: Avoid token burn from massive MCP tool schemas. Keep the default profile locked to `core` and execute programmatic scripts or on-demand profile switching (`scripts/mcp-profile.sh <core|ui|compression|all>`, `scripts/mcp-profile.ps1 -Profile <core|ui|compression|all>`). Verify the servers actually boot with `python3 scripts/verify-mcp-servers.py`.
 - **Planning with Files & Spec-Kit**: Maintain persistent execution files in `.planning/` (`task_plan.md`, `findings.md`, `progress.md`) and specifications in `specs/<NNN>-<slug>/`, scaffolded from the templates in `.specify/` (see `.specify/README.md`).
 
 ---
@@ -81,7 +81,7 @@ Every row above is enforced by `scripts/verify-adapters.py`: an adapter that los
 
 ## 6. Verification & Slash Commands
 
-- Verification Suite: `verify-all.cmd` (Windows) or `./scripts/verify-all.sh` (POSIX) — **9 suites, all must pass**.
+- Verification Suite: `verify-all.cmd` (Windows) or `./scripts/verify-all.sh` (POSIX) — **10 suites, all must pass**.
 - Project Checks: `npm test`, `npm run lint`, `npm run typecheck` (requires `npm install`).
 - File Limits Check: `powershell -ExecutionPolicy Bypass -File ./scripts/verify-file-limits.ps1`
 - Sync Agent Adapters: `powershell -ExecutionPolicy Bypass -File ./scripts/sync-agent-adapters.ps1`

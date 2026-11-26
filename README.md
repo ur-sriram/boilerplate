@@ -128,7 +128,7 @@ from then on the rules, skills and commands are available.
 1. Describe what you want     →  "Add a dark mode toggle"
 2. Agent plans it              →  /plan  (writes spec.md, plan.md, tasks.md)
 3. Agent builds it             →  /tdd   (failing test first, then code)
-4. Agent checks itself         →  /verify (runs all 9 suites)
+4. Agent checks itself         →  /verify (runs all 10 suites)
 5. Agent reviews the diff      →  /review
 ```
 
@@ -140,7 +140,7 @@ You are an AI coding agent working in this repository.
 1. Read `AGENTS.md` at the project root first — it is the short index of every
    rule and skill you should use.
 2. Run `./scripts/verify-all.sh` (or `verify-all.cmd` on Windows) before you
-   start. All 9 suites must pass.
+   start. All 10 suites must pass.
 3. Before writing code for a new feature, run `/plan`. It creates the spec,
    plan and task files under `specs/<number>-<name>/`.
 4. For implementation, use `/tdd` — write a failing test first, watch it fail,
@@ -292,6 +292,14 @@ by default, to keep your agent's context small. Switch profiles with:
 On Windows: `powershell -ExecutionPolicy Bypass -File ./scripts/mcp-profile.ps1 ui`
 
 The switcher updates **every** agent's config at once, so they never disagree.
+
+A configured server is not a working server — one entry sat in all nine
+configs for months while crashing on startup. Prove they boot:
+
+```bash
+python3 scripts/verify-mcp-servers.py           # boot every server, list its tools
+python3 scripts/verify-mcp-servers.py graphify  # just one
+```
 
 ### The project constitution (your rules of the house)
 

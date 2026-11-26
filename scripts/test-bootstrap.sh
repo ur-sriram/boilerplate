@@ -80,11 +80,22 @@ echo "[INFO] Snapshotted ${SNAPSHOT_COUNT} external file reference(s)."
 echo ""
 echo "--- Replicating Repository into Isolated Sandbox ---"
 mkdir -p "${SANDBOX_DIR}/repo"
-cp -R "${PROJECT_ROOT}"/* "${SANDBOX_DIR}/repo/" 2>/dev/null || true
-# Copy dotfiles
-cp -R "${PROJECT_ROOT}"/.[!.]* "${SANDBOX_DIR}/repo/" 2>/dev/null || true
-# Clean internal excludes
-rm -rf "${SANDBOX_DIR}/repo/.git" "${SANDBOX_DIR}/repo/node_modules" "${SANDBOX_DIR}/repo/.venv" "${SANDBOX_DIR}/repo/__pycache__" 2>/dev/null || true
+# Copy the repository into the sandbox.
+#
+# The copy EXCLUDES the project-local caches (`.cache/`), the VCS metadata and
+# installed dependencies. The previous revision used `cp -R` followed by
+# `rm -rf`, which copied the entire uv/npm cache - hundreds of megabytes and
+# hundreds of thousands of files - into the sandbox before deleting it, and
+# made this suite unusably slow. Excluding at copy time also keeps the
+# sandbox free of another project-local cache tree.
+tar -C "${PROJECT_ROOT}" \
+    --exclude='./.git' \
+    --exclude='./.cache' \
+    --exclude='./node_modules' \
+    --exclude='./.venv' \
+    --exclude='./venv' \
+    --exclude='./__pycache__' \
+    -cf - . 2>/dev/null | tar -C "${SANDBOX_DIR}/repo" -xf - 2>/dev/null || true
 echo "[OK] Sandbox repository populated."
 
 # ----------------------------------------------------------------------

@@ -97,10 +97,13 @@ Write-Host "[INFO] Snapshotted $($ExternalSnapshot.Count) file(s) across $($Moni
 Write-Host "`n--- Replicating Repository into Isolated Sandbox ---" -ForegroundColor Cyan
 $copySuccess = $false
 
-# Fast copy with robocopy if available
+# Fast copy with robocopy if available.
+# `.cache` is excluded on purpose: it holds the project-local uv/npm package
+# caches (hundreds of megabytes), and copying them into the sandbox made this
+# suite unusably slow. The POSIX twin excludes the same directory.
 $roboCmd = Get-Command "robocopy" -ErrorAction SilentlyContinue
 if ($roboCmd) {
-    $roboOut = & robocopy "$ProjectRoot" "$SandboxDir" /E /XD .git node_modules .venv venv dist build __pycache__ temp tmp sandbox .sandbox /XF *.log *.tmp 2>&1
+    $roboOut = & robocopy "$ProjectRoot" "$SandboxDir" /E /XD .git .cache node_modules .venv venv dist build __pycache__ temp tmp sandbox .sandbox /XF *.log *.tmp 2>&1
     if ($LASTEXITCODE -lt 8) {
         $copySuccess = $true
     }
@@ -108,7 +111,7 @@ if ($roboCmd) {
 
 if (-not $copySuccess) {
     # Fallback to PowerShell recursive copy
-    $excludes = @(".git", "node_modules", ".venv", "venv", "dist", "build", "__pycache__")
+    $excludes = @(".git", ".cache", "node_modules", ".venv", "venv", "dist", "build", "__pycache__")
     Get-ChildItem -Path $ProjectRoot -Force | Where-Object { $excludes -notcontains $_.Name } | ForEach-Object {
         Copy-Item -LiteralPath $_.FullName -Destination $SandboxDir -Recurse -Force
     }

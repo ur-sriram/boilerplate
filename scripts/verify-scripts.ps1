@@ -23,20 +23,47 @@ Write-Host "   Script Syntax & AST Integrity Verification Suite         " -Foreg
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "[INFO] Project root: $ProjectRoot"
 
-$Excludes = @("node_modules", "dist", "build", ".venv", "venv", "env", "ENV", "__pycache__", "sandbox", ".sandbox")
+$Excludes = @("node_modules", ".cache", ".git", "dist", "build", ".venv", "venv", "env", "ENV", "__pycache__", ".pytest_cache", "sandbox", ".sandbox")
 
-# Gather all scripts
-$allFiles = Get-ChildItem -Path $ProjectRoot -Recurse -File | Where-Object {
-    $itemPath = $_.FullName
-    $skip = $false
-    foreach ($exc in $Excludes) {
-        if ($itemPath -like "*\$exc\*" -or $itemPath -like "*/$exc/*" -or $_.Name -like "boilerplate_smoke_*") {
-            $skip = $true
-            break
+# Enumerate repository files WITHOUT descending into the excluded directories.
+#
+# `Get-ChildItem -Recurse` followed by a `Where-Object` filter still WALKS
+# every file inside node_modules and the project-local .cache/ tree (the uv
+# and npm package caches - hundreds of thousands of files), which made these
+# suites take minutes instead of seconds. The POSIX twin uses `find -prune`
+# for the same reason; the exclusion lists must stay identical.
+function Get-RepoFiles {
+    param(
+        [Parameter(Mandatory = $true)][string]$Root,
+        [Parameter(Mandatory = $true)][string[]]$Excludes
+    )
+
+    $results = New-Object System.Collections.Generic.List[System.IO.FileInfo]
+    $stack = New-Object System.Collections.Stack
+    $stack.Push($Root)
+
+    while ($stack.Count -gt 0) {
+        $dir = $stack.Pop()
+        try {
+            foreach ($item in Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue) {
+                if ($item.PSIsContainer) {
+                    if ($Excludes -notcontains $item.Name -and $item.Name -notlike "boilerplate_smoke_*") {
+                        $stack.Push($item.FullName)
+                    }
+                } elseif ($item.Name -notlike "boilerplate_smoke_*") {
+                    $results.Add($item)
+                }
+            }
+        } catch {
+            # Unreadable directory: skip it rather than fail the suite.
         }
     }
-    -not $skip
+
+    return $results
 }
+
+# Gather all scripts
+$allFiles = Get-RepoFiles -Root $ProjectRoot -Excludes $Excludes
 
 $ps1Files = $allFiles | Where-Object { $_.Extension -eq ".ps1" }
 $pyFiles  = $allFiles | Where-Object { $_.Extension -eq ".py" }

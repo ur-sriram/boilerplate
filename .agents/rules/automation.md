@@ -86,7 +86,7 @@ so "zero global writes" cannot silently regress.
 
 ## 3. Programmatic Verification Suite
 
-Quality and boundary enforcement are verified programmatically from scratch without third-party frameworks. The master test suite is invoked via [`verify-all.cmd`](../../verify-all.cmd), `scripts/verify-all.ps1` or `scripts/verify-all.sh`, and runs **nine** suites:
+Quality and boundary enforcement are verified programmatically from scratch without third-party frameworks. The master test suite is invoked via [`verify-all.cmd`](../../verify-all.cmd), `scripts/verify-all.ps1` or `scripts/verify-all.sh`, and runs **ten** suites:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
@@ -118,6 +118,27 @@ Quality and boundary enforcement are verified programmatically from scratch with
    - `AGENTS.md` is present and valid as the universal core index.
    - 100% of skills in `.agents/skills/` are linked in rule files.
    - Additional hooks (`session-catchup.py`, `memory-sync.{ps1,sh}`), `claude-mem`, and `ponytail` / `headroom` / `rtk` integrations are validated.
+
+### 3.1 Runtime MCP Verification (on demand)
+
+The ten suites above are **static**: they check that every MCP config is
+shaped correctly and names the canonical invocation. They cannot prove a
+server actually starts — the Graphify entry was configured in all nine
+adapters for months while crashing on startup.
+
+`scripts/verify-mcp-servers.py` closes that gap. It launches each server,
+completes the MCP handshake and lists the tools the server exposes:
+
+```bash
+python3 scripts/verify-mcp-servers.py              # every canonical server
+python3 scripts/verify-mcp-servers.py graphify     # one server
+python3 scripts/verify-mcp-servers.py --list       # show what would be launched
+```
+
+It is kept out of `verify-all` because it needs network access on the first
+run (`uvx` and `npx` download the packages) and because a cold `npx`/`uvx`
+install takes minutes. Run it after changing any MCP invocation, and use its
+tool list as the source of truth for the names used in rules and skills.
 
 ---
 

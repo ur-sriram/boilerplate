@@ -4,16 +4,18 @@
       "command": "uvx",
       "args": [
         "--from",
-        "graphifyy",
+        "graphifyy[mcp]",
         "graphify-mcp"
       ],
       "disabled": false,
       "autoApprove": [
-        "search_graph",
-        "trace_path",
-        "get_code_snippet",
         "query_graph",
-        "get_architecture"
+        "get_node",
+        "get_neighbors",
+        "shortest_path",
+        "get_section",
+        "god_nodes",
+        "graph_stats"
       ],
       "env": {
         "UV_CACHE_DIR": ".cache/uv",
@@ -33,6 +35,7 @@
       "disabled": true,
       "autoApprove": [
         "list_registries",
+        "list_components",
         "search_components",
         "get_component",
         "compare_components",

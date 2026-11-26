@@ -5,7 +5,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "graphifyy",
+        "graphifyy[mcp]",
         "graphify-mcp"
       ],
       "profile": "core",

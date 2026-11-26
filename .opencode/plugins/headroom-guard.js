@@ -5,7 +5,7 @@
  * Graphify AST graph for code discovery and to fall back to grep only for
  * raw string literals, log messages and configuration values.
  *
- * IMPORTANT — THIS ADVISES, IT DOES NOT BLOCK.
+ * IMPORTANT - THIS ADVISES, IT DOES NOT BLOCK.
  * The first implementation of this plugin threw an exception for any
  * repository-wide grep. Measurement showed it was wrong in BOTH directions:
  *   - it blocked `grep "foo" src/features/feature.ts`  (a single-file search)
@@ -15,6 +15,15 @@
  * worse than nudging, so the guard now prints a one-line reminder and lets
  * the command run. Hard enforcement of that rule belongs in the prompt layer
  * (.agents/rules/codebase-exploration.md) and in Graphify itself.
+ *
+ * WHY THE DEFAULT EXPORT LOOKS LIKE THIS
+ * --------------------------------------
+ * OpenCode loads every `.opencode/plugins/*.{js,ts}` file as a *path plugin*.
+ * The loader contract (verified against opencode 1.19.6) requires the module's
+ * DEFAULT export to be an object carrying a non-empty string `id` and a
+ * `server()` function. The previous revision exported a bare
+ * `export const server = ...`, so OpenCode rejected the file with
+ * "Path plugin ... must export id" and the advisory never fired.
  */
 
 const SEARCH_COMMANDS = new Set(['grep', 'egrep', 'fgrep', 'rg', 'ripgrep', 'ag', 'ack']);
@@ -67,7 +76,7 @@ function isBroadPath(path) {
  * Return the broad path of an unbounded search, or null when the search is
  * scoped to specific files/directories.
  */
-function findBroadSearch(command) {
+export function findBroadSearch(command) {
   if (!command || typeof command !== 'string') return null;
 
   const tokens = tokenize(command.trim());
@@ -99,23 +108,42 @@ function findBroadSearch(command) {
   return null;
 }
 
-export const server = async ({ directory }) => {
-  const projectRoot = directory || process.cwd();
+function advise(command, broad, projectRoot) {
+  console.error(
+    `[ADVISORY] Repository-wide search detected ("${String(command).slice(0, 120)}"). ` +
+      `For code structure use the graphify MCP server (query_graph / get_node / ` +
+      `get_neighbors / shortest_path) per .agents/rules/codebase-exploration.md; reserve grep ` +
+      `for string literals, log messages and config values. Project root: ${projectRoot}`,
+  );
+}
 
-  return {
-    'tool.execute.before': async (input, output) => {
-      const command = output?.args?.command ?? '';
-      const broad = findBroadSearch(command);
+export default {
+  id: 'boilerplate-headroom-guard',
+
+  /** OpenCode V1 hook surface. */
+  async server({ directory } = {}) {
+    const projectRoot = directory || process.cwd();
+
+    return {
+      'tool.execute.before': async (input, output) => {
+        const command = output?.args?.command ?? '';
+        const broad = findBroadSearch(command);
+        if (!broad) return;
+        advise(command, broad, projectRoot);
+      },
+    };
+  },
+
+  /** OpenCode V2 hook surface. */
+  async setup(ctx) {
+    const projectRoot = ctx?.location?.directory || process.cwd();
+
+    await ctx.tool.hook('execute.before', async (event) => {
+      const input = event?.input;
+      const command = input && typeof input === 'object' ? input.command : '';
+      const broad = findBroadSearch(typeof command === 'string' ? command : '');
       if (!broad) return;
-
-      console.error(
-        `[ADVISORY] Repository-wide search detected ("${String(command).slice(0, 120)}"). ` +
-          `For code structure use the graphify MCP server (search_graph / trace_path / ` +
-          `get_code_snippet) per .agents/rules/codebase-exploration.md; reserve grep for ` +
-          `string literals, log messages and config values. Project root: ${projectRoot}`,
-      );
-    },
-  };
+      advise(command, broad, projectRoot);
+    });
+  },
 };
-
-export default { server };

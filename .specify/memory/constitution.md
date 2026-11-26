@@ -56,7 +56,7 @@ All development activities follow the four-phase Spec-Kit lifecycle:
 3. **Execute**: Implement via atomic, independently verifiable tasks from
    `tasks.md` using `executing-plans` and TDD.
 4. **Verify & Review**: Execute the full programmatic verification suite
-   (`verify-all.cmd` / `scripts/verify-all.sh` — nine suites, all must pass),
+   (`verify-all.cmd` / `scripts/verify-all.sh` — ten suites, all must pass),
    run two-stage code review via `/review`, and surgically simplify via
    `/simplify`.
 
