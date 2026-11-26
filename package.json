@@ -6,7 +6,7 @@
   "description": "Project-level, multi-agent AI coding boilerplate: 377 wired skills, spec-driven development, cross-platform guardrails and verification suite.",
   "license": "MIT",
   "engines": {
-    "node": ">=22.6.0"
+    "node": ">=22.18.0"
   },
   "scripts": {
     "test": "node --test \"src/features/**/*.test.ts\"",

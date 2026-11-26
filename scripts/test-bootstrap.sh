@@ -382,7 +382,7 @@ MEMORY_REPO="${SANDBOX_DIR}/repo"
 if [ -f "${MEMORY_REPO}/src/features/claude-mem/cli.ts" ]; then
     MEMORY_CLI="${MEMORY_REPO}/src/features/claude-mem/cli.ts"
 
-    if node "${MEMORY_CLI}" remember --kind fact \
+    if node "${MEMORY_CLI}" remember --type discovery \
         --title "Bootstrap probe episode" \
         --body "The episodic store round-trips inside the sandbox." \
         --tags bootstrap \
