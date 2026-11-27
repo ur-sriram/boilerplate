@@ -13,6 +13,41 @@ Nothing yet.
 
 ---
 
+## [1.1.1] — 2026-11-27
+
+### Fixed
+
+- **The `rtk` hook compressed the wrong thing.** A PostToolUse hook receives
+  the agent's hook payload — for Claude Code, Codex, Goose and Qoder a JSON
+  envelope — not terminal output. The filter piped that envelope into
+  `rtk filter` and echoed it back when rtk was missing, so it asked rtk to
+  compress JSON and added the untruncated payload to the agent's context. The
+  filter now extracts the terminal output from the payload first, and the
+  POSIX hook, the PowerShell hook, the cross-platform dispatcher and the
+  OpenCode plugin share one implementation
+  (`scripts/hooks/rtk-filter.mjs`) instead of four copies that could drift.
+- **The `rtk` feature could not be observed.** The dry-run only asserted that
+  the hook exited 0, so it could decay into a no-op unnoticed — the failure
+  mode claude-mem had. It now asserts that the output passes through
+  unchanged without rtk, that the terminal output is extracted from a JSON
+  payload, and that rtk is used when it is installed.
+
+### Changed
+
+- **`THIRD_PARTY.md` describes what was actually taken.** The ponytail row
+  claimed an adapted hook structure and an npm install; the reality is six
+  vendored skills in `.agents/skills/automation/`, no npm install, and no
+  upstream `/ponytail` command. The rtk row now records the shared
+  implementation and the fact that the 60-90% saving is OpenCode's — only its
+  plugin replaces the tool result.
+- **`docs/architecture/conflict-resolution.md` no longer misdescribes the
+  ponytail family** as "retained strictly for statusline utilities".
+- **The OpenCode plugin `ponytail-compactor.js` is now `file-size-guard.js`** —
+  it enforces this repository's own 400-line rule and had nothing to do with
+  ponytail.
+
+---
+
 ## [1.1.0] — 2026-11-27
 
 ### Changed
@@ -105,6 +140,7 @@ First public release of the boilerplate as a GitHub template.
 - MCP servers are started from project-local paths and are verified to boot.
 - `AGENTS.md` stays inside its token budget, so agent context stays small.
 
-[Unreleased]: https://github.com/ur-sriram/boilerplate/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/ur-sriram/boilerplate/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/ur-sriram/boilerplate/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/ur-sriram/boilerplate/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ur-sriram/boilerplate/releases/tag/v1.0.0
