@@ -5,11 +5,12 @@
 # Recalls the project's cross-session episodic memory and prints it as
 # session context.
 #
-# WHY THE CLI IS CALLED INSTEAD OF REIMPLEMENTED HERE
-# The store lives in src/features/claude-mem/ and is covered by unit tests.
-# Both hook twins and the cross-platform dispatcher therefore invoke the same
-# CLI, so the three entry points can never disagree about the format, the
-# redaction rules or the store location.
+# WHY THE LAUNCHER IS CALLED INSTEAD OF REIMPLEMENTED HERE
+# The store lives in .repo/claude-mem/ and is covered by unit tests.
+# Every entry point - this script, its PowerShell twin, the cross-platform
+# dispatcher and the OpenCode plugin - therefore invokes the same launcher,
+# so they can never disagree about the format, the redaction rules, the
+# store location or the runtime requirement.
 #
 # The hook is ADVISORY: it never blocks a session and never fails it.
 # ==============================================================================
@@ -22,4 +23,4 @@ if ! command -v node >/dev/null 2>&1; then
     exit 0
 fi
 
-exec node "${ROOT_DIR}/src/features/claude-mem/cli.ts" sync --root "${ROOT_DIR}"
+exec node "${ROOT_DIR}/.repo/claude-mem/run.mjs" sync --root "${ROOT_DIR}"

@@ -67,7 +67,7 @@ macOS and Linux:
 - `SessionStart`: `session-start` prints the runtime readiness summary;
   `memory-sync` recalls the project's episodic memory (claude-mem).
 
-Codex also reads custom prompts from `.codex/prompts/` — the 8 slash commands
+Codex also reads custom prompts from `.codex/prompts/` — the 10 slash commands
 are distributed there from `.agents/commands/`.
 
 ## 5. Verification

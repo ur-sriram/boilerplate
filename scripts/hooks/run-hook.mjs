@@ -200,12 +200,13 @@ function hookSessionStart() {
 /**
  * Recall the project's episodic memory.
  *
- * The store itself lives in src/features/claude-mem/ and is exercised by the
- * unit tests there; this hook only invokes its CLI so that the same code
- * path is used by agents, by the POSIX/PowerShell twins and by the tests.
+ * The store itself lives in .repo/claude-mem/ and is exercised by the
+ * unit tests there; this hook only invokes its launcher so that the same
+ * code path is used by agents, by the POSIX/PowerShell twins and by the
+ * tests.
  */
 function hookMemorySync() {
-  const cli = path.join(REPO_ROOT, 'src', 'features', 'claude-mem', 'cli.ts');
+  const cli = path.join(REPO_ROOT, '.repo', 'claude-mem', 'run.mjs');
   const result = spawnSync(
     process.execPath,
     [cli, 'sync', '--root', REPO_ROOT],

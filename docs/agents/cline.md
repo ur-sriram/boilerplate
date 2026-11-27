@@ -8,7 +8,7 @@ Cline reads project rules from `.clinerules` and discovers skills from
 | What | Where |
 |---|---|
 | Rules | `.clinerules` (points at `AGENTS.md` and `.agents/rules/`) |
-| Slash commands | `.cline/commands/*.md` (8 commands, distributed from `.agents/commands/`) |
+| Slash commands | `.cline/commands/*.md` (10 commands, distributed from `.agents/commands/`) |
 | Skills | `.cline/skills` → junction to `.agents/skills` |
 | MCP servers | Not configured by this repository — Cline reads MCP servers from its own settings; the canonical invocations are published in `.mcp.json` |
 | Hooks | Not available in Cline's project config |

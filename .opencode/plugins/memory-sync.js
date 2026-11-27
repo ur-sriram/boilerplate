@@ -8,9 +8,9 @@ import path from 'node:path';
  * session starts, so the agent begins with the decisions, preferences and
  * error recoveries recorded in previous sessions.
  *
- * WHY IT SPAWNS THE CLI
- * The store lives in src/features/claude-mem/ and is covered by unit tests.
- * This plugin invokes the same CLI that the POSIX, PowerShell and
+ * WHY IT SPAWNS THE LAUNCHER
+ * The store lives in .repo/claude-mem/ and is covered by unit tests.
+ * This plugin invokes the same launcher that the POSIX, PowerShell and
  * cross-platform dispatcher hooks invoke, so every entry point recalls the
  * same episodes in the same format.
  *
@@ -18,7 +18,7 @@ import path from 'node:path';
  * break the session.
  */
 
-const CLI_RELATIVE = path.join('src', 'features', 'claude-mem', 'cli.ts');
+const CLI_RELATIVE = path.join('.repo', 'claude-mem', 'run.mjs');
 
 /** Run the claude-mem CLI and return its stdout (empty on any failure). */
 function recallEpisodes(projectRoot) {

@@ -1,0 +1,15 @@
+description = "Search the project's episodic memory for earlier decisions and facts"
+prompt = """
+Search the project's episodic memory (.agents/memory/episodes.jsonl) for the
+decisions, preferences, error recoveries and facts recorded in earlier
+sessions.
+
+Use the claude-mem skill (.agents/skills/automation/claude-mem/SKILL.md) for the
+exact CLI and store format. Tags are a hard filter and free text is a relevance
+score, so a sharp query beats a vague one.
+
+1. Search for the topic the user asked about.
+2. Summarize what earlier sessions decided, quoting the titles of the matched
+   episodes.
+3. Say so plainly if nothing matched — do not invent history.
+"""

@@ -59,13 +59,28 @@ if ($nodeCmd) {
     try {
         $nodeVer = (& node --version 2>&1).Trim()
         Write-Host "[OK] Node.js: $nodeVer ($($nodeCmd.Source))" -ForegroundColor Green
+
+        # Node 22.18.0 is the first release that strips TypeScript types by
+        # default. The test suite, the claude-mem CLI and every hook that runs
+        # a .ts file need it. On an older runtime they die with an opaque
+        # ERR_UNKNOWN_FILE_EXTENSION, so the version is checked here instead.
+        $parts = ($nodeVer -replace '^v', '').Split('.')
+        $maj = [int]$parts[0]
+        $min = [int]$parts[1]
+        if ($maj -gt 22 -or ($maj -eq 22 -and $min -ge 18)) {
+            Write-Host "[OK] Node.js is new enough for TypeScript type stripping (>= 22.18.0)." -ForegroundColor Green
+        } else {
+            Write-Host "[FAIL] Node.js $nodeVer is too old: TypeScript type stripping needs Node >= 22.18.0." -ForegroundColor Red
+            Write-Host "       Diagnostic: Upgrade Node.js (https://nodejs.org/). The test suite, the claude-mem CLI and the lifecycle hooks all run .ts files directly." -ForegroundColor Gray
+            $CriticalErrors++
+        }
     } catch {
         Write-Host "[FAIL] Node.js command found at $($nodeCmd.Source) but failed to execute: $_" -ForegroundColor Red
         $CriticalErrors++
     }
 } else {
     Write-Host "[FAIL] Node.js was not found in PATH." -ForegroundColor Red
-    Write-Host "       Diagnostic: Install Node.js LTS (>= 18.0.0) from https://nodejs.org/" -ForegroundColor Gray
+    Write-Host "       Diagnostic: Install Node.js LTS (>= 22.18.0) from https://nodejs.org/" -ForegroundColor Gray
     $CriticalErrors++
 }
 

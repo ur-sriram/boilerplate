@@ -33,7 +33,29 @@ because it supports a POSIX-specific command field.
 | `protect-config.{ps1,sh}` | PreToolUse | Tool invocation parameters (`target_path`) | Validates `target_path` against project root. Blocks access to `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, `~/.claude`.<br>**Exit 0**: Allowed.<br>**Exit 1**: Access denied with `[GUARDRAIL]` error. |
 | `rtk-filter.{ps1,sh}` | PostToolUse | Raw stdout / stderr stream from terminal commands | Probes for `rtk` binary in `PATH`. If present, applies token compression (60–90% reduction). If absent, passes raw output through unmodified.<br>**Exit 0**: Guaranteed non-crashing passthrough. |
 | `session-start.{ps1,sh}` | SessionStart | None | Asserts Git cleanliness, verifies `.env` presence/safety, checks runtime tools, prints statusline summary.<br>**Exit 0**: Ready. |
-| `memory-sync.{ps1,sh}` | SessionStart | None | Invokes the `claude-mem` CLI (`src/features/claude-mem/cli.ts`) to recall the episodic memory store in `.agents/memory/`. Credentials are scrubbed on write; the store never leaves the project root.<br>**Exit 0**: Recalled (or skipped — a missing store never fails a session). |
+| `memory-sync.{ps1,sh}` | SessionStart | None | Invokes the `claude-mem` launcher (`.repo/claude-mem/run.mjs`) to recall the episodic memory store in `.agents/memory/`. Credentials are scrubbed on write; the store never leaves the project root.<br>**Exit 0**: Recalled (or skipped — a missing store never fails a session). |
+
+### Episodic Memory: recall is automatic, writing is a command
+
+The `memory-sync` hook only **reads**. The store used to stay empty in real
+sessions, because nothing told the agent to write into it and no command
+existed for it — the feature looked alive and did nothing.
+
+The write path is now explicit:
+
+| Command | What it does |
+|---|---|
+| `/remember` | Record a decision, preference, error recovery or fact in `.agents/memory/episodes.jsonl`. |
+| `/recall` | Search that store for what earlier sessions decided. |
+
+Both are distributed from `.agents/commands/` to every adapter and enforced by
+`scripts/verify-adapters.py`, so an adapter that loses one fails the parity
+suite.
+
+The implementation is a vendored island in [`.repo/claude-mem/`](../../.repo/claude-mem/) —
+project-level, dependency-free, and pinned in
+[`THIRD_PARTY.md`](../../THIRD_PARTY.md). `src/features/` stays free for the
+user's own code.
 
 ---
 
@@ -111,7 +133,7 @@ Quality and boundary enforcement are verified programmatically from scratch with
                                                       └──────────────────┘
 ```
 
-1. **`verify-tools.{ps1,sh}`**: Asserts availability of Git, Node.js, Python, PowerShell, and tests executable resolution for configured MCP tools.
+1. **`verify-tools.{ps1,sh}`**: Asserts availability of Git, Node.js, Python, PowerShell, and tests executable resolution for configured MCP tools. It also asserts that Node is **>= 22.18.0**: the test suite, the `claude-mem` CLI and every hook that runs a `.ts` file need the type stripping that ships by default from that release, so an older runtime is reported here instead of failing later with an opaque `ERR_UNKNOWN_FILE_EXTENSION`.
 2. **`verify-scripts.{ps1,sh}`**: Performs AST parsing and syntax validation of all `.ps1`, `.sh`, and `.py` files in `scripts/`, `scripts/hooks/`, and `.specify/`, plus hook dry-runs (the guardrail must ALLOW an in-scope target and BLOCK an out-of-scope one).
 3. **`verify-links.py`**: Multi-stage code-block aware parser validating that 100% of internal Markdown links, relative paths, and GitHub anchor slugs resolve cleanly.
 4. **`test-bootstrap.{ps1,sh}`**: Clones repository into an isolated sandbox temp directory, runs the bootstrap sequence, and programmatically verifies:

@@ -1,8 +1,8 @@
-# Claude-Mem: From Documentation-Only to a Working Episodic Memory Store
+# Claude-Mem: a working, project-level episodic memory store
 
-**Status:** implemented in this branch.
-**Scope:** the `claude-mem` skill, the `memory-sync` hook and the `.agents/memory/`
-store.
+**Status:** implemented, and reachable from every adapter.
+**Scope:** the `claude-mem` skill, the `/remember` + `/recall` commands, the
+`memory-sync` hook and the `.agents/memory/` store.
 
 ---
 
@@ -43,21 +43,26 @@ posture of the guardrails.
 
 **Route A — implement the architecture locally.** Dependency-free (Node
 built-ins only), project-local, no new always-on MCP server, and it fits the
-repository's own conventions: a feature folder under `src/features/`, strict
-TypeScript, and TDD.
+repository's own conventions: strict TypeScript, and TDD.
 
 Route A was chosen.
 
 ## 3. What was built
 
-### 3.1 The store — `src/features/claude-mem/`
+### 3.1 The island — `.repo/claude-mem/`
+
+The store is **vendored third-party architecture**, so it does not belong in
+`src/features/` — that folder is the user's own code (`cp -r
+src/features/_template src/features/my-feature`). It lives in a project-level
+island instead:
 
 | File | Role |
 |---|---|
 | `feature.types.ts` | `MemoryEntry`, `MemoryDraft`, `MemoryQuery`, `MemoryStats` |
-| `feature.ts` | `MemoryStore`: read, write, recall, prune, redact |
+| `feature.ts` | `MemoryStore`: read, write, recall, prune, redact — plus `findProjectRoot` |
 | `cli.ts` | `remember` / `recall` / `list` / `stats` / `sync` |
-| `feature.test.ts` | 13 unit tests (`npm test`) |
+| `run.mjs` | Plain-JS launcher: checks the runtime, then runs the CLI |
+| `feature.test.ts` | 15 unit tests (`npm test`) |
 
 **Format.** `.agents/memory/episodes.jsonl` — one JSON object per line,
 append-only, newest last:
@@ -80,18 +85,42 @@ key blocks, `Bearer` headers and `key: value` assignments); every path
 resolves inside the project root; the store is pruned to the newest 500
 episodes; and the store file is git-ignored as machine-local state.
 
+**Project root.** `findProjectRoot()` walks up to the nearest `AGENTS.md`
+instead of counting directory levels. A fixed depth is a trap: when the island
+sat under `src/features/claude-mem/` it was three levels up, and the same
+arithmetic then pointed the store at the **parent of the project** — a write
+outside the boundary the store promises never to cross. Two unit tests now
+pin this behaviour.
+
 ### 3.2 The hook — `memory-sync`
 
 `scripts/hooks/run-hook.mjs` gained a `memory-sync` handler, and
 `scripts/hooks/memory-sync.{sh,ps1}` were rewritten from `mkdir + echo` into
-real invocations of the same CLI. One implementation, three entry points, so
-the POSIX path, the PowerShell path and the Node dispatcher cannot disagree
-about the format, the redaction rules or the store location.
+real invocations of the same launcher. One implementation, four entry points
+(the POSIX path, the PowerShell path, the Node dispatcher and the OpenCode
+plugin), so they cannot disagree about the format, the redaction rules or the
+store location.
 
 The hook is advisory: a missing store or a missing Node runtime never fails
 the session it runs in.
 
-### 3.3 The wiring — every hook-capable adapter
+### 3.3 The commands — `/remember` and `/recall`
+
+Recall at session start is automatic; **writing was not**. Nothing in the
+agent workflow ever wrote an episode, so in a real session the hook recalled
+an empty store — the feature looked alive and did nothing.
+
+| Command | What it does |
+|---|---|
+| `/remember` | Record a decision, preference, error recovery or fact. |
+| `/recall` | Search the store for what earlier sessions decided. |
+
+Both live in `.agents/commands/` (the canonical source), are distributed to
+every adapter by `scripts/sync-agent-adapters.sh`, and are enforced by
+`scripts/verify-adapters.py`. `AGENTS.md` states the invariant that ties them
+together: memory persists because the agent is told to write into it.
+
+### 3.4 The wiring — every hook-capable adapter
 
 | Adapter | Registration |
 |---|---|
@@ -104,34 +133,51 @@ the session it runs in.
 
 Adapters without a hook API (Cursor, Cline, Windsurf, Copilot, Kimi, Junie)
 are unchanged; they rely on the prompt-level rules, as documented in
-`.agents/rules/core-invariants.md`.
+`.agents/rules/core-invariants.md` — and on `/recall` for on-demand search.
 
-### 3.4 The enforcement — the part that was missing
+### 3.5 The enforcement — the part that was missing
 
-The reason this feature died is that nothing checked it. Three checks now do:
+The reason this feature died is that nothing checked it. Four checks now do:
 
 1. **`scripts/verify-adapters.py`** — `HOOK_MARKERS` gained `memory-sync`, so
    an adapter that loses the hook fails the parity suite.
-2. **`scripts/verify-scripts.{sh,ps1}`** — the `memory-sync` hook is dry-run
+2. **`scripts/verify-adapters.py`** — `CANONICAL_COMMANDS` gained `remember`
+   and `recall`, so an adapter that loses either command fails too.
+3. **`scripts/verify-scripts.{sh,ps1}`** — the `memory-sync` hook is dry-run
    and must report the episodic store, instead of merely parsing.
-3. **`scripts/test-bootstrap.{sh,ps1}`** — a new Assertion 6 writes an episode
-   into the sandbox, recalls it, checks the store stayed inside the project
-   root, and asserts the hook is registered in every hook-capable adapter.
+4. **`scripts/test-bootstrap.{sh,ps1}`** — Assertion 6 writes an episode into
+   the sandbox, recalls it, checks the store stayed inside the project root,
+   and asserts the hook is registered in every hook-capable adapter.
 
 `scripts/verify-opencode-plugins.mjs` also exercises the new OpenCode plugin
 against the loader contract.
+
+### 3.6 The runtime requirement
+
+The CLI is TypeScript executed directly by Node, which needs the type
+stripping that ships by default from **Node 22.18.0**. On an older runtime
+the failure happens while the module graph is loading — before any code in
+`cli.ts` runs — so it surfaced as an opaque
+`TypeError [ERR_UNKNOWN_FILE_EXTENSION]: Unknown file extension ".ts"`,
+swallowed by the advisory catch. Three changes make it honest:
+
+- `run.mjs` is plain JavaScript, so it always loads; it checks the version and
+  prints what to install.
+- `package.json` declares `"node": ">=22.18.0"` (it claimed `>=22.6.0`).
+- `scripts/verify-tools.{sh,ps1}` asserts the version, so CI catches it
+  before a session does.
 
 ## 4. Documentation corrections
 
 | File | Change |
 |---|---|
-| `AGENTS.md:11` | Describes the real store and the hook. |
-| `.agents/skills/automation/claude-mem/SKILL.md` | Real usage: CLI commands, store format, guardrails. |
-| `.agents/memory/README.md` | Store format, retention, hook wiring. |
-| `.agents/rules/automation.md` | New hook in the tree and the contract table; the bootstrap-validation claim is now true. |
-| `README.md` | New feature row; the suite count (9 → 10) matches reality. |
-| `THIRD_PARTY.md:23` | Status `Integrated on Demand` → `Adapted & Hooked`; the impossible `node mcp-server.cjs` invocation removed. |
-| `docs/agents/*.md` | The memory-sync hook documented for all six hook-capable agents. |
+| `AGENTS.md` | Describes the real store, the commands, and the `.repo/` island convention. |
+| `.agents/skills/automation/claude-mem/SKILL.md` | Real usage: launcher, CLI commands, when to write, store format, guardrails. |
+| `.agents/memory/README.md` | Store format, retention, hook and command wiring. |
+| `.agents/rules/automation.md` | New hook in the tree and the contract table; the write path is documented; the bootstrap-validation claim is now true. |
+| `README.md` | New feature row; the slash-command table; the suite count (9 → 10) matches reality. |
+| `THIRD_PARTY.md:23` | Status `Integrated on Demand` → `Adapted & Hooked`; the impossible `node mcp-server.cjs` invocation removed; the island path recorded. |
+| `docs/agents/*.md` | The memory-sync hook and the two commands documented for all six hook-capable agents. |
 | `.gitignore` / `.aiignore` | The store file is machine-local state. |
 
 ## 5. Residual risk
@@ -141,7 +187,11 @@ against the loader contract.
   telemetry, no heavyweight dependency" posture, but it means recall is weaker
   than a semantic index for paraphrased questions.
 - **Adapters without a hook API get no automatic recall.** The store is still
-  writable and readable by hand; only the automatic trigger is missing there.
+  writable and readable by hand — and through `/recall`; only the automatic
+  trigger is missing there.
 - **Qoder and Antigravity use a `"MemorySync"` event key.** Those runtimes
   ignore unknown event keys rather than failing, so the worst case is that the
   recall does not fire on those two hosts — it cannot break them.
+- **The store is machine-local.** It is git-ignored, so a team shares no
+  memory: each clone starts empty. Sharing it would mean committing episodes,
+  which conflicts with the "zero secrets, machine-local state" rule.

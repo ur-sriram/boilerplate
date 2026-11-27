@@ -9,7 +9,7 @@ Cursor reads project rules from `.cursor/rules/core.mdc`, MCP servers from
 |---|---|
 | Rules | `.cursor/rules/core.mdc` (points at `AGENTS.md` and `.agents/rules/`) |
 | MCP servers | `.cursor/mcp.json` — canonical invocations, `graphify` on by default |
-| Slash commands | `.cursor/commands/*.md` (8 commands) |
+| Slash commands | `.cursor/commands/*.md` (10 commands) |
 | Skills | `.cursor/skills` → junction to `.agents/skills`; Cursor also reads `.agents/skills` natively |
 | Hooks | Not available in Cursor project config — the guardrail is enforced at the prompt level by `AGENTS.md` |
 

@@ -20,11 +20,11 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { MemoryStore } from './feature.ts';
+import { MemoryStore, findProjectRoot } from './feature.ts';
 import type { MemoryKind } from './feature.types.ts';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
-const DEFAULT_ROOT = path.resolve(SCRIPT_DIR, '..', '..', '..');
+const DEFAULT_ROOT = findProjectRoot(SCRIPT_DIR);
 const KINDS: readonly MemoryKind[] = ['decision', 'preference', 'recovery', 'fact'];
 
 function parseArgs(argv: readonly string[]): Record<string, string> {
@@ -147,6 +147,18 @@ try {
   process.exit(main());
 } catch (error) {
   // A memory hook must never crash the host session.
-  process.stderr.write(`[MEMORY] claude-mem failed: ${(error as Error).message}\n`);
+  const message = (error as Error).message ?? String(error);
+
+  // The CLI is TypeScript and runs directly under Node, so it needs the
+  // type stripping that ships by default from Node 22.18. On an older
+  // runtime the failure is an opaque ERR_UNKNOWN_FILE_EXTENSION — say what
+  // actually went wrong instead.
+  if (message.includes('ERR_UNKNOWN_FILE_EXTENSION') || message.includes('Unknown file extension')) {
+    process.stderr.write(
+      `[MEMORY] claude-mem needs Node >= 22.18.0 (TypeScript type stripping); this runtime is ${process.version}.\n`,
+    );
+  } else {
+    process.stderr.write(`[MEMORY] claude-mem failed: ${message}\n`);
+  }
   process.exit(0);
 }
