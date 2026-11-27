@@ -7,7 +7,7 @@ same canonical capabilities:
   * rules          -> references AGENTS.md (or the shared rule files)
   * MCP            -> the canonical server invocations (graphify / ui-registry / headroom)
   * hooks          -> protect-config / rtk-filter / session-start / memory-sync
-  * slash commands -> the 8 canonical commands distributed from .agents/commands/
+  * slash commands -> the 10 canonical commands distributed from .agents/commands/
   * skills         -> a junction that RESOLVES into .agents/skills (or native access)
 
 This exists because the parity claims in AGENTS.md and docs/agents/*.md were

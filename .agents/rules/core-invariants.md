@@ -25,7 +25,25 @@ This document defines the absolute, non-negotiable operational invariants govern
 
 ---
 
-## 3. Worktree & Context Isolation
+## 3. Episodic Memory & Cross-Session Recall
+
+1. **Decisions Persist**: A settled decision, a stated preference and a
+   recovered error are written to the episodic store in `.agents/memory/` with
+   the `/remember` command, so the next session starts with them. The store is
+   machine-local and git-ignored — it never becomes repository content.
+2. **Recall Before Asking**: Search the store with `/recall` before asking the
+   user a question the project may already have answered, and never invent
+   history: if nothing matched, say so.
+3. **Automatic Recall**: The `memory-sync` hook surfaces the most recent
+   episodes at session start for every adapter that has a hook API. Runtimes
+   without one (Cursor, Cline, Windsurf, Copilot, Kimi, Junie) rely on this
+   rule at the prompt level and on `/recall` for on-demand search.
+4. **No Secrets in Memory**: Credentials are scrubbed at write time, and the
+   store is scoped strictly inside the project root.
+
+---
+
+## 4. Worktree & Context Isolation
 
 1. **Isolated Worktrees**: When performing exploratory spikes, complex refactoring, or multi-step feature implementations, use isolated Git worktrees via the [`using-git-worktrees`](../skills/superpowers/using-git-worktrees/SKILL.md) skill.
 2. **Context Purity**: Never pollute the primary working tree with unverified intermediate builds or broken experiments.
@@ -33,7 +51,7 @@ This document defines the absolute, non-negotiable operational invariants govern
 
 ---
 
-## 4. Karpathy Surgical Execution
+## 5. Karpathy Surgical Execution
 
 1. **Think Before Coding**: State assumptions explicitly. Surface tradeoffs upfront. Ask clarifying questions before writing code when requirements are ambiguous.
 2. **Simplicity First**: Write the minimum amount of code that solves the user's problem. Avoid speculative abstractions, unnecessary flexibility, or dead-weight boilerplate.
@@ -45,7 +63,7 @@ This document defines the absolute, non-negotiable operational invariants govern
 
 ---
 
-## 5. Related Standards & Skills
+## 6. Related Standards & Skills
 
 - [Planning Standards](planning-standards.md): Spec-Kit SDD and Superpowers plan workflows.
 - [Code Quality](code-quality.md): TDD cycles, systematic debugging, and code review.

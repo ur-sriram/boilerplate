@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ERR_UNKNOWN_FILE_EXTENSION` that the advisory catch swallowed. A plain-JS
   launcher (`.repo/claude-mem/run.mjs`) now checks the runtime first and says
   what to install.
+- `.agents/rules/core-invariants.md` had no clause about episodic memory, so
+  the adapters without a hook API had no prompt-level rule to fall back on.
+  Section 3 now states it.
+- The slash-command count was still 8 in `scripts/sync-agent-adapters.sh`,
+  `scripts/verify-adapters.py` and `docs/agents/copilot.md` after the two new
+  commands landed.
 
 ---
 

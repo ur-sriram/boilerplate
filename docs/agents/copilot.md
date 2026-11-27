@@ -28,5 +28,5 @@ That file is provided in this repository.
 ## 3. Verification
 
 ```bash
-python3 scripts/verify-adapters.py   # confirms the 8 prompt files exist
+python3 scripts/verify-adapters.py   # confirms the 10 prompt files exist
 ```

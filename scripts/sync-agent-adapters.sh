@@ -72,7 +72,7 @@ done
 # ---------------------------------------------------------------------------
 # Slash command distribution
 # ---------------------------------------------------------------------------
-# .agents/commands/ is the CANONICAL source for the 8 slash commands.
+# .agents/commands/ is the CANONICAL source for the 10 slash commands.
 # They are distributed to every adapter that supports a project-level command
 # directory, so `/plan`, `/review`, `/test`, ... resolve the same way
 # everywhere instead of only in Claude Code and OpenCode.
