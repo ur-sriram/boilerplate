@@ -1,8 +1,8 @@
-# Claude-Mem: a working, project-level episodic memory store
+# Claude-Mem: From Documentation-Only to a Working Episodic Memory Store
 
-**Status:** implemented, and reachable from every adapter.
-**Scope:** the `claude-mem` skill, the `/remember` + `/recall` commands, the
-`memory-sync` hook and the `.agents/memory/` store.
+**Status:** implemented.
+**Scope:** the `claude-mem` skill, the `memory-sync` hook and the `.agents/memory/`
+store.
 
 ---
 
@@ -43,84 +43,159 @@ posture of the guardrails.
 
 **Route A — implement the architecture locally.** Dependency-free (Node
 built-ins only), project-local, no new always-on MCP server, and it fits the
-repository's own conventions: strict TypeScript, and TDD.
+repository's own conventions: a feature folder under `src/features/`, strict
+TypeScript, and TDD.
 
 Route A was chosen.
 
-## 3. What was built
+## 3. Upstream parity
 
-### 3.1 The island — `.repo/claude-mem/`
+Upstream `thedotmack/claude-mem` is a full product: a Bun worker service, an
+LLM "observer" that runs beside the coding agent, SQLite plus Chroma, a
+25-tool MCP server, cloud sync and telemetry. A project-local store cannot
+and should not reproduce all of that. What it can do is reproduce the
+**concepts** that make the system work.
 
-The store is **vendored third-party architecture**, so it does not belong in
-`src/features/` — that folder is the user's own code (`cp -r
-src/features/_template src/features/my-feature`). It lives in a project-level
-island instead:
+| Upstream concept | Where it lives upstream | Here | Status |
+|---|---|---|---|
+| Observation **types** (9, from the `code` mode profile) | `plugin/modes/code.json` | `MemoryType` in `feature.types.ts` | **Adapted** |
+| Observation **concepts** (7) | `plugin/modes/code.json` | `MemoryConcept` in `feature.types.ts` | **Adapted** |
+| `sensitive` type withheld from injection | `src/sdk/prompts.ts` | `sensitive` excluded from recall unless `--include-sensitive` | **Adapted** |
+| Tier-0 dedup: exact title → silent auto-merge | `src/services/dedup/nearDuplicate.ts` | same normalized title → merged in place | **Adapted** |
+| Tier-1 dedup: near-duplicate → review candidate, never a silent merge | `src/services/dedup/nearDuplicate.ts` | near-duplicate → **not written**, reported to the caller | **Adapted** |
+| IDF model + veto (`token_df`, `idf.ts`, `idfVeto.ts`) | `src/services/sqlite/dedup-store.ts` | `buildIdfModel` in `scoring.ts`, applied to ranking | **Adapted** |
+| Index-first retrieval: `search` → `timeline` → `get_observations` | `src/servers/mcp-server.ts` | `search` → `timeline` → `get`, index rows carry no body | **Adapted** |
+| Session identity (`memory_session_id`) | `observations.memory_session_id` | `session.json` + `MemorySession` | **Adapted** |
+| Redaction of credentials | `src/utils/redaction.ts` (opt-in) | always on (upstream defaults to **off**) | **Adapted, stronger** |
+| Project scoping | one user-scoped `~/.claude-mem` DB, projects are rows | one store per project, inside the project root | **Adapted, stronger** |
+| No telemetry / no cloud | telemetry on by default upstream | none | **Adapted** |
+| Observer process (LLM writes the observations) | `src/services/worker/`, `src/sdk/prompts.ts` | — | **Not adapted** (needs a model provider) |
+| Automatic capture from tool activity | 8 Claude Code hook events | — | **Not adapted** (no observer to observe) |
+| SQLite + FTS5 + Chroma vectors | `src/services/sqlite/`, `src/services/worker/search/` | JSONL + IDF ranking | **Not adapted** (no dependencies) |
+| MCP server with 25 tools | `src/servers/mcp-server.ts` | — | **Not adapted** (see below) |
+| Session summaries (`session_summaries`) | `src/services/sqlite/SessionStore.ts` | — | **Not adapted** (produced by the observer) |
+| Corpus / knowledge agent, work state, TeamBrain, cloud sync | `src/services/worker/knowledge/`, `src/server/routes/` | — | **Out of scope** (product features, not memory) |
+
+### Deliberate deviations
+
+1. **Project-scoped, not user-scoped.** Upstream keeps one database for the
+   whole machine and keys it by project. This repository's first invariant is
+   "never write outside the project root" (`AGENTS.md:9`), so the store lives
+   inside the project and is git-ignored.
+2. **Redaction is always on.** Upstream ships `CLAUDE_MEM_REDACT_ENABLED:
+   'false'` — redaction is opt-in. Here it is unconditional, because the
+   store is shared between agents and the repo's invariant is "ZERO secrets
+   committed".
+3. **JSONL, not SQLite.** No native dependency, no build step, and the store
+   is small enough (≤500 episodes) that a full-text index would be
+   premature.
+4. **Dedup similarity is Jaccard, not TF-IDF cosine.** Upstream compares
+   near-duplicates with a TF-IDF cosine. At write time the corpus is still
+   half-built, so a TF-IDF verdict depends on how much history happens to
+   exist yet — two episodes differing only in a number were flagged as
+   duplicates when the store was young and not when it was full. Jaccard has
+   no such dependence. The IDF model is still used for **ranking**, where the
+   whole store is available.
+5. **Types are a fixed set.** Upstream's types are data-driven per "mode"
+   (`src/services/domain/ModeManager.ts`); a project-local store has one mode,
+   so the `code` mode's nine types are taken as the vocabulary.
+
+### What is still missing, and why
+
+- **The MCP server surface.** Upstream exposes `search`, `timeline`,
+  `get_observations`, `save_memory` and twenty more tools so an agent can
+  query memory natively. This repository's integration is the CLI plus the
+  lifecycle hook. Adding an always-on MCP server would put a fourth server
+  into all nine manifests and break the ~350-token "core" profile budget.
+  A local stdio MCP server with the four memory tools is the natural next
+  step if the budget allows it.
+- **Automatic capture.** Upstream records every tool call and has an LLM
+  summarise it into observations. Without a model provider there is nothing
+  to summarise with, so episodes are written explicitly by an agent. The
+  deterministic half of upstream's capture — which files were read and
+  edited — is still possible and is not implemented.
+
+## 4. What was built
+
+### 4.1 The island — `.repo/claude-mem/`
 
 | File | Role |
 |---|---|
-| `feature.types.ts` | `MemoryEntry`, `MemoryDraft`, `MemoryQuery`, `MemoryStats` |
-| `feature.ts` | `MemoryStore`: read, write, recall, prune, redact — plus `findProjectRoot` |
-| `cli.ts` | `remember` / `recall` / `list` / `stats` / `sync` |
+| `feature.types.ts` | Taxonomy (types, concepts), entry, index row, session, query |
+| `feature.ts` | `MemoryStore`: read, write, dedup, recall, prune, redact, sessions |
+| `scoring.ts` | `terms`, `normalizeTitle`, `buildIdfModel`, `jaccard` |
+| `cli.ts` | `remember` / `search` / `get` / `timeline` / `list` / `sessions` / `stats` / `sync` |
 | `run.mjs` | Plain-JS launcher: checks the runtime, then runs the CLI |
-| `feature.test.ts` | 15 unit tests (`npm test`) |
+| `feature.test.ts` | 22 unit tests (`npm test`) |
 
 **Format.** `.agents/memory/episodes.jsonl` — one JSON object per line,
 append-only, newest last:
 
 ```json
-{"id":"…","kind":"decision","title":"…","body":"…","tags":["…"],
- "sessionId":"…","createdAt":"2026-11-26T22:41:14.401Z"}
+{"id":"…","type":"decision","title":"…","body":"…","concepts":["why-it-exists"],
+ "tags":["…"],"sessionId":"s-20261126T2312Z-3f9a","createdAt":"…"}
 ```
 
 A corrupt line is skipped rather than failing the store, so a half-written
 file can never break a session.
 
-**Recall.** Tags are a hard filter; free text is a relevance score where a
-title hit outweighs a body hit, so a sharply-titled decision wins over a
-passing mention in a long body.
+**Retrieval.** Upstream's three-step contract: `search` returns compact index
+rows (no body — roughly a tenth of a full record), `timeline` returns the
+episodes around an anchor, `get` returns the full record for the ids that
+were chosen. Tags, concepts and types are hard filters; free text is scored
+with the IDF model, and a term that occurs in most episodes is vetoed
+because it no longer discriminates.
+
+**Dedup.** Two tiers, both from upstream: an identical normalized title is
+merged in place; a near-duplicate is reported and **not** written, because
+silently merging would lose knowledge.
 
 **Guardrails, enforced in code rather than prose.** Credentials are scrubbed
-before an episode is written (GitHub/Slack/OpenAI/AWS/Google tokens, private
-key blocks, `Bearer` headers and `key: value` assignments); every path
-resolves inside the project root; the store is pruned to the newest 500
-episodes; and the store file is git-ignored as machine-local state.
+before an episode is written; every path resolves inside the project root;
+the store is pruned to the newest 500 episodes; the store file is
+git-ignored as machine-local state.
 
 **Project root.** `findProjectRoot()` walks up to the nearest `AGENTS.md`
-instead of counting directory levels. A fixed depth is a trap: when the island
-sat under `src/features/claude-mem/` it was three levels up, and the same
-arithmetic then pointed the store at the **parent of the project** — a write
-outside the boundary the store promises never to cross. Two unit tests now
+instead of counting directory levels. A fixed depth is a trap: when the
+island sat under `src/features/claude-mem/` it was three levels up, and the
+same arithmetic then pointed the store at the **parent of the project** — a
+write outside the boundary the store promises never to cross. Two unit tests
 pin this behaviour.
 
-### 3.2 The hook — `memory-sync`
+### 4.2 The hook — `memory-sync`
 
 `scripts/hooks/run-hook.mjs` gained a `memory-sync` handler, and
 `scripts/hooks/memory-sync.{sh,ps1}` were rewritten from `mkdir + echo` into
 real invocations of the same launcher. One implementation, four entry points
 (the POSIX path, the PowerShell path, the Node dispatcher and the OpenCode
-plugin), so they cannot disagree about the format, the redaction rules or the
-store location.
+plugin), so they cannot disagree about the format, the redaction rules, the
+store location or the runtime requirement.
+
+The hook is the session boundary: it opens a session, so every episode
+written afterwards is attributed to it — upstream's `memory_session_id`.
 
 The hook is advisory: a missing store or a missing Node runtime never fails
 the session it runs in.
 
-### 3.3 The commands — `/remember` and `/recall`
+### 4.3 The commands — `/remember` and `/recall`
 
 Recall at session start is automatic; **writing was not**. Nothing in the
 agent workflow ever wrote an episode, so in a real session the hook recalled
-an empty store — the feature looked alive and did nothing.
+an empty store — the feature looked alive and did nothing. Only the test
+suite ever filled it.
 
 | Command | What it does |
 |---|---|
-| `/remember` | Record a decision, preference, error recovery or fact. |
-| `/recall` | Search the store for what earlier sessions decided. |
+| `/remember` | Record an observation — a decision, a discovery, a change, a gotcha. |
+| `/recall` | Search the store for what earlier sessions observed. |
 
 Both live in `.agents/commands/` (the canonical source), are distributed to
 every adapter by `scripts/sync-agent-adapters.sh`, and are enforced by
 `scripts/verify-adapters.py`. `AGENTS.md` states the invariant that ties them
-together: memory persists because the agent is told to write into it.
+together, and `.agents/rules/core-invariants.md` gives the adapters without
+a hook API a prompt-level rule to fall back on.
 
-### 3.4 The wiring — every hook-capable adapter
+### 4.4 The wiring — every hook-capable adapter
 
 | Adapter | Registration |
 |---|---|
@@ -133,9 +208,9 @@ together: memory persists because the agent is told to write into it.
 
 Adapters without a hook API (Cursor, Cline, Windsurf, Copilot, Kimi, Junie)
 are unchanged; they rely on the prompt-level rules, as documented in
-`.agents/rules/core-invariants.md` — and on `/recall` for on-demand search.
+`.agents/rules/core-invariants.md`.
 
-### 3.5 The enforcement — the part that was missing
+### 4.5 The enforcement — the part that was missing
 
 The reason this feature died is that nothing checked it. Four checks now do:
 
@@ -145,14 +220,14 @@ The reason this feature died is that nothing checked it. Four checks now do:
    and `recall`, so an adapter that loses either command fails too.
 3. **`scripts/verify-scripts.{sh,ps1}`** — the `memory-sync` hook is dry-run
    and must report the episodic store, instead of merely parsing.
-4. **`scripts/test-bootstrap.{sh,ps1}`** — Assertion 6 writes an episode into
-   the sandbox, recalls it, checks the store stayed inside the project root,
-   and asserts the hook is registered in every hook-capable adapter.
+4. **`scripts/test-bootstrap.{sh,ps1}`** — a new Assertion 6 writes an episode
+   into the sandbox, recalls it, checks the store stayed inside the project
+   root, and asserts the hook is registered in every hook-capable adapter.
 
 `scripts/verify-opencode-plugins.mjs` also exercises the new OpenCode plugin
 against the loader contract.
 
-### 3.6 The runtime requirement
+### 4.6 The runtime requirement
 
 The CLI is TypeScript executed directly by Node, which needs the type
 stripping that ships by default from **Node 22.18.0**. On an older runtime
@@ -161,37 +236,47 @@ the failure happens while the module graph is loading — before any code in
 `TypeError [ERR_UNKNOWN_FILE_EXTENSION]: Unknown file extension ".ts"`,
 swallowed by the advisory catch. Three changes make it honest:
 
-- `run.mjs` is plain JavaScript, so it always loads; it checks the version and
-  prints what to install.
-- `package.json` declares `"node": ">=22.18.0"` (it claimed `>=22.6.0`).
+- `run.mjs` is plain JavaScript, so it always loads; it checks the version
+  and prints what to install.
+- `package.json` declares `"node": ">=22.18.0"`.
 - `scripts/verify-tools.{sh,ps1}` asserts the version, so CI catches it
   before a session does.
 
-## 4. Documentation corrections
+## 5. Documentation corrections
 
 | File | Change |
 |---|---|
-| `AGENTS.md` | Describes the real store, the commands, and the `.repo/` island convention. |
-| `.agents/skills/automation/claude-mem/SKILL.md` | Real usage: launcher, CLI commands, when to write, store format, guardrails. |
-| `.agents/memory/README.md` | Store format, retention, hook and command wiring. |
-| `.agents/rules/automation.md` | New hook in the tree and the contract table; the write path is documented; the bootstrap-validation claim is now true. |
-| `README.md` | New feature row; the slash-command table; the suite count (9 → 10) matches reality. |
-| `THIRD_PARTY.md:23` | Status `Integrated on Demand` → `Adapted & Hooked`; the impossible `node mcp-server.cjs` invocation removed; the island path recorded. |
-| `docs/agents/*.md` | The memory-sync hook and the two commands documented for all six hook-capable agents. |
+| `AGENTS.md:11` | Describes the real store and the hook. |
+| `.agents/skills/automation/claude-mem/SKILL.md` | Real usage: CLI commands, taxonomy, store format, guardrails. |
+| `.agents/memory/README.md` | Store format, retention, hook wiring. |
+| `.agents/rules/automation.md` | New hook in the tree and the contract table; the bootstrap-validation claim is now true. |
+| `README.md` | New feature row; the suite count (9 → 10) matches reality. |
+| `THIRD_PARTY.md:23` | Status `Integrated on Demand` → `Adapted & Hooked`; the impossible `node mcp-server.cjs` invocation removed. |
+| `docs/agents/*.md` | The memory-sync hook documented for all six hook-capable agents. |
+| `docs/architecture/conflict-resolution.md` | `mcp-search` marked as upstream-only and unused here. |
 | `.gitignore` / `.aiignore` | The store file is machine-local state. |
+| `.repo/README.md` | What a vendored island is and the rules one follows. |
+| `.agents/rules/core-invariants.md` | New section: persist decisions, recall before asking, never invent history, keep secrets out. |
+| `docs/architecture/claude-mem.md` | This document — the island, the write path and the runtime floor. |
+| `package.json` | The Node engine floor is `>=22.18.0`: the hooks and the test suite both execute TypeScript directly, and type stripping is unflagged only from Node 22.18. |
 
-## 5. Residual risk
+## 6. Residual risk
 
-- **Recall quality is lexical.** Scoring is keyword-based, not semantic; there
-  is no embedding or vector index. This matches the repository's "no external
-  telemetry, no heavyweight dependency" posture, but it means recall is weaker
-  than a semantic index for paraphrased questions.
+- **Recall quality is lexical.** Scoring is IDF-weighted keyword matching, not
+  semantic; there is no embedding index. This matches the repository's "no
+  external telemetry, no heavyweight dependency" posture, but recall is
+  weaker than a semantic index for paraphrased questions.
 - **Adapters without a hook API get no automatic recall.** The store is still
-  writable and readable by hand — and through `/recall`; only the automatic
-  trigger is missing there.
+  writable and readable by hand; only the automatic trigger is missing there.
 - **Qoder and Antigravity use a `"MemorySync"` event key.** Those runtimes
   ignore unknown event keys rather than failing, so the worst case is that the
   recall does not fire on those two hosts — it cannot break them.
+- **No automatic capture.** Episodes are written explicitly; upstream writes
+  them from observed tool activity.
 - **The store is machine-local.** It is git-ignored, so a team shares no
   memory: each clone starts empty. Sharing it would mean committing episodes,
   which conflicts with the "zero secrets, machine-local state" rule.
+- **The island is vendored code.** `.repo/claude-mem/` is a local
+  reimplementation of upstream's architecture, not upstream's code. It is
+  pinned in `THIRD_PARTY.md`, and it stays in `.repo/` so that `src/features/`
+  remains free for the user's own features.

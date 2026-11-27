@@ -42,7 +42,7 @@
 | 📝 | **Plan before you code** | Spec-driven templates (`.specify/`) plus 10 slash commands like `/plan` and `/tdd` turn "build me X" into a written spec, plan and task list. |
 | 🧩 | **Works with 13 AI agents** | Claude Code, Cursor, Codex, Copilot, OpenCode, Junie, Kimi, Goose, Qoder, Windsurf, Cline, Antigravity, Freebuff — same rules, same skills, same commands in each. 12 of them are checked automatically by `scripts/verify-adapters.py`. |
 | ✅ | **A test suite that checks the repo itself** | 10 checks run in seconds: scripts parse, links resolve, files are under 400 lines, every agent has the same capabilities, the skill map is current. If something drifts, you find out immediately — in CI and on your machine. |
-| 🧠 | **Cross-session memory that actually persists** | The agent records decisions, preferences and error recoveries with `/remember`, finds them again with `/recall`, and the `memory-sync` hook surfaces them at session start — a local, project-scoped store, no external service, secrets scrubbed on write. |
+| 🧠 | **Cross-session memory that actually persists** | The agent records decisions, discoveries and error recoveries with `/remember`, finds them again with `/recall`, and the `memory-sync` hook surfaces them at session start — a local, project-scoped store, no external service, secrets scrubbed on write, and the upstream `claude-mem` observation types, dedup and retrieval contract. |
 | 🚧 | **Sensible defaults for quality** | Strict TypeScript, a 400-line file cap, TDD as the default, a 4-step UI pipeline, and a "no secrets, no global writes" constitution. |
 
 **What it deliberately does NOT do:** touch your global config. Nothing is
@@ -190,8 +190,8 @@ Type `/` in your agent's chat. All ten work in every supported adapter.
 | `/refactor-clean` | Removes dead code and splits files over 400 lines |
 | `/verify` | Runs the full 10-suite verification suite |
 | `/build-fix` | Diagnoses and fixes build or type errors |
-| `/remember` | Records a decision, preference, recovery or fact in the project's episodic memory |
-| `/recall` | Searches the episodic memory for what earlier sessions decided |
+| `/remember` | Records an observation — a decision, a discovery, a change, a gotcha — in the project's episodic memory |
+| `/recall` | Searches the episodic memory for what earlier sessions observed |
 
 ---
 

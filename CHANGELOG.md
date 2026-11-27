@@ -16,8 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `src/features/` stays free for the user's own features and every vendored
   component is pinned in `THIRD_PARTY.md`. See
   [`.repo/README.md`](.repo/README.md).
-- **The episodic memory now has a write path.** `/remember` records a
-  decision, preference, error recovery or fact; `/recall` searches the store.
+- **The episodic memory now has a write path.** `/remember` records an
+  observation — a decision, a discovery, a change, a gotcha; `/recall`
+  searches the store.
   Both are distributed to every adapter and enforced by
   `scripts/verify-adapters.py`. Previously the hook only read, so in a real
   session the store stayed empty.

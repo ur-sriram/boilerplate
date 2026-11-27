@@ -8,7 +8,7 @@ Production-ready, project-level boilerplate for autonomous coding agents. Zero g
 
 - **Strict Project Scoping**: NEVER modify files outside the project root (the directory that contains this `AGENTS.md`). Writes to `%USERPROFILE%`, `%APPDATA%`, `~/.config`, `~/.gemini`, or `~/.claude` are forbidden.
 - **Secret Hygiene**: ZERO secrets committed. Keep sensitive credentials in `.env` (strictly mirrored and ignored by `.gitignore` and `.aiignore`); see [`.env.example`](.env.example).
-- **Episodic Memory**: Decisions, preferences, error recoveries and facts persist in `.agents/memory/` (a git-ignored JSONL store). Write them with `/remember`, read them with `/recall`; the `memory-sync` hook recalls the store at session start.
+- **Episodic Memory**: Decisions, discoveries, changes and gotchas persist in `.agents/memory/` (a git-ignored JSONL store) using the upstream `claude-mem` observation types. Write them with `/remember`, read them with `/recall`; the `memory-sync` hook recalls the store at session start.
 - **Vendored Third-Party Islands**: Third-party code that ships with this boilerplate lives in `.repo/`, never in `src/features/` — that folder belongs to the user's own features. Every island is pinned with its licence and commit SHA in [`THIRD_PARTY.md`](THIRD_PARTY.md).
 - **Project-Level Isolation**: Everything this repository configures lives inside the project folder. MCP servers and `npm` are pointed at the project-local `.cache/` directory (via the `env` blocks in every adapter config and the project `.npmrc`), so importing this boilerplate does not modify the user's global configuration. The only sanctioned write outside the project is the self-test sandbox, which lives in the system temp directory and is deleted on exit.
 - **Single Canonical Skill Store**: Skills reside strictly in `.agents/skills/`. Agents access them directly or via zero-elevation NTFS directory junctions (`mklink /J`) and symlinks. `scripts/sync-agent-adapters.sh` creates and verifies all six junctions.
@@ -95,6 +95,6 @@ Every row above is enforced by `scripts/verify-adapters.py`: an adapter that los
   - `/verify`: Run full programmatic verification suite.
   - `/build-fix`: Diagnose and resolve build/type errors surgically.
   - `/refactor-clean`: Remove dead code and simplify modules (<= 400 lines).
-  - `/remember`: Record a decision, preference, recovery or fact in the episodic memory store.
-  - `/recall`: Search the episodic memory store for earlier decisions and facts.
+  - `/remember`: Record an observation — a decision, a discovery, a change, a gotcha — in the episodic memory store.
+  - `/recall`: Search the episodic memory store for earlier observations.
 - Browser Testing: Use `browser-use/browser-harness` (`.agents/skills/automation/browser-harness/SKILL.md`) for CDP-driven browser verification.
