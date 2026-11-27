@@ -8,7 +8,7 @@ and prompt files from `.github/prompts/`.
 | What | Where |
 |---|---|
 | Instructions | `.github/copilot-instructions.md` (plus `AGENTS.md`, which Copilot also supports) |
-| Prompt files | `.github/prompts/*.prompt.md` (8 commands, distributed from `.agents/commands/`) |
+| Prompt files | `.github/prompts/*.prompt.md` (10 commands, distributed from `.agents/commands/`) |
 | Skills | Copilot reads `.github/skills/`, `.claude/skills/` and `.agents/skills/` |
 | MCP servers | `.mcp.json` (Copilot CLI) — `graphify` on by default |
 | Hooks | Not available for Copilot IDE sessions; the guardrail is prompt-level |

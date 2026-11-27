@@ -10,7 +10,7 @@ Claude Code reads `CLAUDE.md` (which is just `@AGENTS.md`), the project
 | Instructions | `CLAUDE.md` → `@AGENTS.md` (single source of truth) |
 | MCP servers | `.mcp.json` (root) — `graphify` on, `ui-registry`/`headroom` off by default |
 | Hooks | `.claude/settings.json` — `PreToolUse`, `PostToolUse`, `SessionStart` |
-| Slash commands | `.claude/commands/*.md` (8 commands, distributed from `.agents/commands/`) |
+| Slash commands | `.claude/commands/*.md` (10 commands, distributed from `.agents/commands/`) |
 | Skills | `.claude/skills` → junction to `.agents/skills` (created by `scripts/sync-agent-adapters.sh`) |
 
 ## 2. Hooks

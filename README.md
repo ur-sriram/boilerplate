@@ -39,10 +39,10 @@
 | 🧠 | **377 skills, each with a "how to use it" rule** | Instead of your agent improvising, it loads a proven workflow (TDD, debugging, code review, UI polish, git safety…). Every skill is listed with its governing rule in [`.agents/rules/skills-index.md`](.agents/rules/skills-index.md). |
 | 📏 | **Project rules that load on demand** | 7 short rule files instead of one giant prompt. Your agent reads only the ones the task needs, so it stays fast. |
 | 🛡️ | **Guardrails that actually run** | A hook blocks any file write outside the project folder, on Windows, macOS and Linux — and the project's own package caches stay inside the project too. |
-| 📝 | **Plan before you code** | Spec-driven templates (`.specify/`) plus 8 slash commands like `/plan` and `/tdd` turn "build me X" into a written spec, plan and task list. |
+| 📝 | **Plan before you code** | Spec-driven templates (`.specify/`) plus 10 slash commands like `/plan` and `/tdd` turn "build me X" into a written spec, plan and task list. |
 | 🧩 | **Works with 13 AI agents** | Claude Code, Cursor, Codex, Copilot, OpenCode, Junie, Kimi, Goose, Qoder, Windsurf, Cline, Antigravity, Freebuff — same rules, same skills, same commands in each. 12 of them are checked automatically by `scripts/verify-adapters.py`. |
 | ✅ | **A test suite that checks the repo itself** | 10 checks run in seconds: scripts parse, links resolve, files are under 400 lines, every agent has the same capabilities, the skill map is current. If something drifts, you find out immediately — in CI and on your machine. |
-| 🧠 | **Cross-session memory that actually persists** | Decisions, preferences and error recoveries are recorded in `.agents/memory/` and recalled by a hook when the next session starts — a local, project-scoped store, no external service, secrets scrubbed on write. |
+| 🧠 | **Cross-session memory that actually persists** | The agent records decisions, preferences and error recoveries with `/remember`, finds them again with `/recall`, and the `memory-sync` hook surfaces them at session start — a local, project-scoped store, no external service, secrets scrubbed on write. |
 | 🚧 | **Sensible defaults for quality** | Strict TypeScript, a 400-line file cap, TDD as the default, a 4-step UI pipeline, and a "no secrets, no global writes" constitution. |
 
 **What it deliberately does NOT do:** touch your global config. Nothing is
@@ -178,7 +178,7 @@ You are an AI coding agent working in this repository.
 
 ## 4. The slash commands
 
-Type `/` in your agent's chat. All eight work in every supported adapter.
+Type `/` in your agent's chat. All ten work in every supported adapter.
 
 | Command | What it does |
 |---|---|
@@ -190,6 +190,8 @@ Type `/` in your agent's chat. All eight work in every supported adapter.
 | `/refactor-clean` | Removes dead code and splits files over 400 lines |
 | `/verify` | Runs the full 10-suite verification suite |
 | `/build-fix` | Diagnoses and fixes build or type errors |
+| `/remember` | Records a decision, preference, recovery or fact in the project's episodic memory |
+| `/recall` | Searches the episodic memory for what earlier sessions decided |
 
 ---
 
@@ -235,9 +237,10 @@ my-project/
 ├── .agents/
 │   ├── rules/             ← 7 rule files + the skill wiring map
 │   ├── skills/            ← 377 skills (the big library)
-│   ├── commands/          ← the 8 slash commands (source of truth)
+│   ├── commands/          ← the 10 slash commands (source of truth)
 │   ├── mcp.json           ← MCP server definitions
-│   └── memory/            ← cross-session memory (claude-mem store) (claude-mem store)
+│   └── memory/            ← cross-session memory (claude-mem store)
+├── .repo/                 ← vendored third-party islands (claude-mem)
 ├── .specify/              ← spec-driven development (Spec Kit)
 ├── specs/                 ← your feature specs (created by /plan)
 ├── .planning/             ← live task state (task_plan, findings, progress)
@@ -256,6 +259,11 @@ cp -r src/features/_template src/features/my-feature
 
 Each feature folder holds `feature.ts` (logic), `feature.types.ts` (types),
 `feature.test.ts` (tests), `index.ts` (exports) and a `README.md`.
+
+**What lives in `.repo/`:** third-party code that ships with the boilerplate —
+currently the `claude-mem` episodic memory island. It is project-level and
+pinned in [THIRD_PARTY.md](THIRD_PARTY.md), and it keeps `src/features/`
+free for your own code. See [`.repo/README.md`](.repo/README.md).
 
 ---
 
