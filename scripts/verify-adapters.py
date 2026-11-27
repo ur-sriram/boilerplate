@@ -31,6 +31,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CANONICAL_COMMANDS = [
     "build-fix",
     "plan",
+    "recall",
+    "remember",
     "refactor-clean",
     "review",
     "simplify",

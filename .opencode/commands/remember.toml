@@ -1,0 +1,14 @@
+description = "Record a decision, preference, recovery or fact in the project's episodic memory"
+prompt = """
+Record the decision, preference, error recovery or fact the user just settled on
+in the project's episodic memory, so the next session starts with it.
+
+Use the claude-mem skill (.agents/skills/automation/claude-mem/SKILL.md) for the
+exact CLI and store format. The store lives in .agents/memory/episodes.jsonl,
+is project-local and git-ignored, and credentials are scrubbed on write.
+
+1. Classify the episode: decision, preference, recovery or fact.
+2. Write it with the claude-mem CLI, using a sharp title and the tags that a
+   future session would search for.
+3. Confirm in one line what was stored and where.
+"""
