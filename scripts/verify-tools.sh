@@ -40,9 +40,21 @@ if command -v node >/dev/null 2>&1; then
     NODE_PATH="$(command -v node)"
     NODE_VER="$(node --version 2>&1)"
     echo "[OK] Node.js: ${NODE_VER} (${NODE_PATH})"
+
+    # Node 22.18.0 is the first release that strips TypeScript types by
+    # default. The test suite, the claude-mem CLI and every hook that runs a
+    # .ts file need it. On an older runtime they die with an opaque
+    # ERR_UNKNOWN_FILE_EXTENSION, so the version is checked here instead.
+    if node -e 'const [maj,min]=process.versions.node.split(".").map(Number);process.exit(maj>22||(maj===22&&min>=18)?0:1)' >/dev/null 2>&1; then
+        echo "[OK] Node.js is new enough for TypeScript type stripping (>= 22.18.0)."
+    else
+        echo "[FAIL] Node.js ${NODE_VER} is too old: TypeScript type stripping needs Node >= 22.18.0."
+        echo "       Diagnostic: Upgrade Node.js (https://nodejs.org/). The test suite, the claude-mem CLI and the lifecycle hooks all run .ts files directly."
+        CRITICAL_ERRORS=$((CRITICAL_ERRORS + 1))
+    fi
 else
     echo "[FAIL] Node.js was not found in PATH."
-    echo "       Diagnostic: Install Node.js LTS (>= 18.0.0) from https://nodejs.org/"
+    echo "       Diagnostic: Install Node.js LTS (>= 22.18.0) from https://nodejs.org/"
     CRITICAL_ERRORS=$((CRITICAL_ERRORS + 1))
 fi
 
