@@ -1,13 +1,17 @@
-description = "Record a decision, preference, recovery or fact in the project's episodic memory"
+description = "Record an observation in the project's episodic memory"
 prompt = """
-Record the decision, preference, error recovery or fact the user just settled on
-in the project's episodic memory, so the next session starts with it.
+Record the observation the user just settled on in the project's episodic
+memory, so the next session starts with it.
 
 Use the claude-mem skill (.agents/skills/automation/claude-mem/SKILL.md) for the
-exact CLI and store format. The store lives in .agents/memory/episodes.jsonl,
-is project-local and git-ignored, and credentials are scrubbed on write.
+observation types, the concepts and the exact CLI. The store lives in
+.agents/memory/episodes.jsonl, is project-local and git-ignored, and
+credentials are scrubbed on write.
 
-1. Classify the episode: decision, preference, recovery or fact.
+1. Classify the observation with an upstream type — bugfix, feature, refactor,
+   change, discovery, decision, security_alert, security_note or sensitive —
+   and give it the concepts that describe it (how-it-works, why-it-exists,
+   what-changed, problem-solution, gotcha, pattern, trade-off).
 2. Write it with the claude-mem CLI, using a sharp title and the tags that a
    future session would search for.
 3. Confirm in one line what was stored and where.

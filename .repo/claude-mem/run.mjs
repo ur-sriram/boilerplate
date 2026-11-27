@@ -20,9 +20,12 @@
  * go through it, so they cannot disagree about the runtime requirement.
  *
  * Usage:
- *   node run.mjs remember --kind decision --title "…" [--body "…"] [--tags a,b]
- *   node run.mjs recall   [--text "…"] [--tags a,b] [--limit 5]
+ *   node run.mjs remember --type decision --title "…" [--body "…"] [--tags a,b]
+ *   node run.mjs search   [--text "…"] [--tags a,b] [--limit 5]
+ *   node run.mjs get      <id>
+ *   node run.mjs timeline <id> [--depth 3]
  *   node run.mjs list     [--limit 10]
+ *   node run.mjs sessions
  *   node run.mjs stats
  *   node run.mjs sync     [--root <project-root>] [--limit 5]
  */

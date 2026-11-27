@@ -1,12 +1,12 @@
-description = "Search the project's episodic memory for earlier decisions and facts"
+description = "Search the project's episodic memory for earlier observations"
 prompt = """
 Search the project's episodic memory (.agents/memory/episodes.jsonl) for the
-decisions, preferences, error recoveries and facts recorded in earlier
-sessions.
+observations recorded in earlier sessions — decisions, discoveries, changes and
+gotchas.
 
 Use the claude-mem skill (.agents/skills/automation/claude-mem/SKILL.md) for the
-exact CLI and store format. Tags are a hard filter and free text is a relevance
-score, so a sharp query beats a vague one.
+exact CLI. Types, concepts and tags are hard filters and free text is scored
+with an IDF model, so a sharp query beats a vague one.
 
 1. Search for the topic the user asked about.
 2. Summarize what earlier sessions decided, quoting the titles of the matched

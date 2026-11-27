@@ -379,10 +379,10 @@ echo ""
 echo "--- Assertion 6: claude-mem Episodic Memory Round-Trip + Hook Wiring ---"
 MEMORY_REPO="${SANDBOX_DIR}/repo"
 
-if [ -f "${MEMORY_REPO}/.repo/claude-mem/cli.ts" ]; then
+if [ -f "${MEMORY_REPO}/.repo/claude-mem/run.mjs" ]; then
     MEMORY_CLI="${MEMORY_REPO}/.repo/claude-mem/run.mjs"
 
-    if node "${MEMORY_CLI}" remember --kind fact \
+    if node "${MEMORY_CLI}" remember --type discovery \
         --title "Bootstrap probe episode" \
         --body "The episodic store round-trips inside the sandbox." \
         --tags bootstrap \

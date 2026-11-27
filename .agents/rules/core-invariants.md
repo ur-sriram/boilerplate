@@ -27,9 +27,10 @@ This document defines the absolute, non-negotiable operational invariants govern
 
 ## 3. Episodic Memory & Cross-Session Recall
 
-1. **Decisions Persist**: A settled decision, a stated preference and a
-   recovered error are written to the episodic store in `.agents/memory/` with
-   the `/remember` command, so the next session starts with them. The store is
+1. **Observations Persist**: A settled decision, a discovery, a change or a
+   recovered error is written to the episodic store in `.agents/memory/` with
+   the `/remember` command, using the upstream `claude-mem` observation types
+   and concepts, so the next session starts with them. The store is
    machine-local and git-ignored — it never becomes repository content.
 2. **Recall Before Asking**: Search the store with `/recall` before asking the
    user a question the project may already have answered, and never invent

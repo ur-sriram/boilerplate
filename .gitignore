@@ -70,6 +70,7 @@ Thumbs.db
 
 # Episodic Memory Store (machine-local state)
 .agents/memory/episodes.jsonl
+.agents/memory/session.json
 
 # Secondary Agent Mirrored Skills (Fallback when junctions not used)
 .claude/skills

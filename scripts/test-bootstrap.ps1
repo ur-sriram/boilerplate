@@ -381,7 +381,7 @@ if (-not (Test-Path -LiteralPath $memoryCli)) {
     Write-Host "[FAIL] claude-mem CLI missing in sandbox: $memoryCli" -ForegroundColor Red
     $TotalErrors++
 } else {
-    & node $memoryCli remember --kind fact `
+    & node $memoryCli remember --type discovery `
         --title "Bootstrap probe episode" `
         --body "The episodic store round-trips inside the sandbox." `
         --tags bootstrap `

@@ -45,8 +45,8 @@ The write path is now explicit:
 
 | Command | What it does |
 |---|---|
-| `/remember` | Record a decision, preference, error recovery or fact in `.agents/memory/episodes.jsonl`. |
-| `/recall` | Search that store for what earlier sessions decided. |
+| `/remember` | Record an observation — a decision, a discovery, a change, a gotcha — in `.agents/memory/episodes.jsonl`. |
+| `/recall` | Search that store for what earlier sessions observed. |
 
 Both are distributed from `.agents/commands/` to every adapter and enforced by
 `scripts/verify-adapters.py`, so an adapter that loses one fails the parity
