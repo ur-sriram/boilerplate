@@ -375,7 +375,7 @@ if (-not (Test-Path -LiteralPath $aiIgnorePath)) {
 # Assertion 6: claude-mem Episodic Memory Is Wired, Not Just Described
 # ----------------------------------------------------------------------
 Write-Host "`n--- Assertion 6: claude-mem Episodic Memory Round-Trip + Hook Wiring ---" -ForegroundColor Cyan
-$memoryCli = Join-Path $SandboxDir "src\features\claude-mem\cli.ts"
+$memoryCli = Join-Path $SandboxDir ".repo\claude-mem\run.mjs"
 
 if (-not (Test-Path -LiteralPath $memoryCli)) {
     Write-Host "[FAIL] claude-mem CLI missing in sandbox: $memoryCli" -ForegroundColor Red

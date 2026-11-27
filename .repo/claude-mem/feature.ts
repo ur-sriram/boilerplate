@@ -89,6 +89,34 @@ export function tokenize(text: string): string[] {
     .filter((term) => term.length >= 3);
 }
 
+/**
+ * Locate the project root that owns a given directory.
+ *
+ * The island lives at `<project-root>/.repo/claude-mem/`, so the root is two
+ * levels up. A hard-coded depth is a trap: when the island sat under
+ * `src/features/claude-mem/` it was three levels up, and the same arithmetic
+ * then pointed the store at the PARENT of the project — outside the root the
+ * store promises never to leave. Walking up to the nearest project marker
+ * cannot do that.
+ *
+ * The marker is `AGENTS.md`, which every project bootstrapped from this
+ * template has at its root. When it is missing, the island's own layout
+ * (`<root>/.repo/claude-mem/`) is the fallback.
+ */
+export function findProjectRoot(startDir: string): string {
+  const start = path.resolve(startDir);
+  let dir = start;
+
+  for (let depth = 0; depth < 8; depth += 1) {
+    if (fs.existsSync(path.join(dir, 'AGENTS.md'))) return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+
+  return path.resolve(start, '..', '..');
+}
+
 function isMemoryEntry(value: unknown): value is MemoryEntry {
   if (typeof value !== 'object' || value === null) return false;
   const candidate = value as Partial<MemoryEntry>;

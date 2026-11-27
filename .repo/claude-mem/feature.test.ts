@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { MemoryStore, redactSecrets, tokenize } from './feature.ts';
+import { MemoryStore, findProjectRoot, redactSecrets, tokenize } from './feature.ts';
 
 /**
  * The store writes to a throwaway directory in the OS temp folder. The
@@ -136,6 +136,29 @@ test('the store never leaves the project root', () => {
   const relative = path.relative(root, store.storePath);
   assert.ok(!relative.startsWith('..'));
   assert.equal(path.basename(store.storePath), 'episodes.jsonl');
+});
+
+test('findProjectRoot walks up to the project marker, never past it', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-mem-root-'));
+  fs.writeFileSync(path.join(root, 'AGENTS.md'), '# marker\n');
+
+  const island = path.join(root, '.repo', 'claude-mem');
+  fs.mkdirSync(island, { recursive: true });
+
+  // The island sits two levels under the root, but the depth must not matter.
+  assert.equal(findProjectRoot(island), root);
+  assert.equal(findProjectRoot(path.join(root, '.repo')), root);
+  assert.equal(findProjectRoot(root), root);
+});
+
+test('findProjectRoot falls back to the island layout when no marker exists', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-mem-nomarker-'));
+  const island = path.join(root, '.repo', 'claude-mem');
+  fs.mkdirSync(island, { recursive: true });
+
+  // Two levels up is <root> — and crucially NOT the parent of <root>.
+  assert.equal(findProjectRoot(island), root);
+  assert.notEqual(findProjectRoot(island), path.dirname(root));
 });
 
 test('stats reports the episode count and the kind breakdown', () => {

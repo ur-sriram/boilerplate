@@ -1,7 +1,7 @@
 # ==============================================================================
 # Claude-Mem Episodic Memory Sync Hook (Windows / PowerShell)
 #
-# Windows twin of scripts/hooks/memory-sync.sh. It invokes the same CLI, so
+# Windows twin of scripts/hooks/memory-sync.sh. It invokes the same launcher, so
 # both platforms recall the same episodes in the same format.
 #
 # The hook is ADVISORY: it never blocks a session and never fails it.
@@ -23,6 +23,6 @@ if (-not $Node) {
     exit 0
 }
 
-$Cli = Join-Path $Root "src\features\claude-mem\cli.ts"
+$Cli = Join-Path $Root ".repo\claude-mem\run.mjs"
 & $Node.Source $Cli sync --root $Root
 exit 0
