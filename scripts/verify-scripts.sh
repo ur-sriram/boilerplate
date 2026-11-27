@@ -86,14 +86,48 @@ if [ -d "${HOOKS_DIR}" ]; then
         fi
     fi
 
+    # The rtk hook used to pipe the agent's JSON hook payload straight into
+    # `rtk filter` and echo the whole envelope back when rtk was missing - so
+    # it never compressed terminal output, and the dry-run only asserted that
+    # it exited 0. A feature that cannot be observed is a feature that decays.
+    # These three assertions pin the behaviour that matters.
     RTK_HOOK="${HOOKS_DIR}/rtk-filter.sh"
     if [ -f "${RTK_HOOK}" ]; then
-        if echo "test log" | bash "${RTK_HOOK}" >/dev/null 2>&1; then
-            echo "[PASS] rtk-filter.sh executed cleanly"
+        RTK_SAMPLE="rtk dry-run sample output"
+
+        RTK_OUT="$(printf '%s' "${RTK_SAMPLE}" | bash "${RTK_HOOK}" 2>/dev/null || true)"
+        if [ "${RTK_OUT}" = "${RTK_SAMPLE}" ]; then
+            echo "[PASS] rtk-filter.sh passed the output through unchanged (rtk absent)"
         else
-            echo "[FAIL] rtk-filter.sh failed"
+            echo "[FAIL] rtk-filter.sh altered the output while rtk was absent"
             TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
         fi
+
+        RTK_PAYLOAD='{"tool_name":"Bash","tool_response":{"stdout":"REAL TERMINAL OUTPUT"}}'
+        RTK_OUT="$(printf '%s' "${RTK_PAYLOAD}" | bash "${RTK_HOOK}" 2>/dev/null || true)"
+        if [ "${RTK_OUT}" = "REAL TERMINAL OUTPUT" ]; then
+            echo "[PASS] rtk-filter.sh extracted the terminal output from the hook payload"
+        else
+            echo "[FAIL] rtk-filter.sh did not extract the terminal output (got: ${RTK_OUT})"
+            TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+        fi
+
+        # A fake rtk on PATH proves the filter is actually used when it is
+        # installed. The scratch directory lives inside the project: this
+        # repository does not write outside the project root.
+        RTK_FAKE_DIR="${PROJECT_ROOT}/.cache/rtk-fake-$$"
+        mkdir -p "${RTK_FAKE_DIR}"
+        printf '%s\n' '#!/usr/bin/env sh' "sed 's/^/RTK_COMPRESSED: /'" > "${RTK_FAKE_DIR}/rtk"
+        chmod +x "${RTK_FAKE_DIR}/rtk" 2>/dev/null || true
+        RTK_OUT="$(printf '%s' "${RTK_SAMPLE}" | PATH="${RTK_FAKE_DIR}:${PATH}" bash "${RTK_HOOK}" 2>/dev/null || true)"
+        rm -rf "${RTK_FAKE_DIR}"
+        case "${RTK_OUT}" in
+            *RTK_COMPRESSED*)
+                echo "[PASS] rtk-filter.sh compressed the output through rtk" ;;
+            *)
+                echo "[FAIL] rtk-filter.sh did not use rtk when it was available"
+                TOTAL_ERRORS=$((TOTAL_ERRORS + 1)) ;;
+        esac
     fi
 
     # The claude-mem hook used to be a mkdir+echo stub that no adapter ever

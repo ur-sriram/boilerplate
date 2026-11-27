@@ -211,6 +211,23 @@ if (Test-Path -LiteralPath $hooksDir) {
             Write-Host "[FAIL] rtk-filter.ps1 truncated multi-line pipeline input!" -ForegroundColor Red
             $totalErrors++
         }
+
+        # A PostToolUse hook receives the agent's hook payload, not terminal
+        # text - for Claude Code, Codex, Goose and Qoder that is a JSON
+        # envelope. The filter must extract the output from it instead of
+        # handing the envelope to rtk and echoing it back.
+        $rtkPayload = '{"tool_name":"Bash","tool_response":{"stdout":"REAL TERMINAL OUTPUT"}}'
+        $payloadOutput = $rtkPayload | & powershell -NoProfile -ExecutionPolicy Bypass -File $rtkHook 2>&1
+        if ($LASTEXITCODE -eq 0 -and (($payloadOutput -join "`n") -match "REAL TERMINAL OUTPUT")) {
+            Write-Host "[PASS] rtk-filter.ps1 extracted the terminal output from the hook payload" -ForegroundColor Green
+        } else {
+            Write-Host "[FAIL] rtk-filter.ps1 did not extract the terminal output from the hook payload" -ForegroundColor Red
+            $totalErrors++
+        }
+
+        # The "rtk is installed" case is proven by the POSIX suite with a fake
+        # rtk on PATH: the filter itself is the shared scripts/hooks/rtk-filter.mjs
+        # on both platforms, so this twin only has to prove that it invokes it.
     }
 
     # 4c. Session-start hook check

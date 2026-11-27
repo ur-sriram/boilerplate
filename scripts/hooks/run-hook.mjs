@@ -29,6 +29,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { filterPayload } from './rtk-filter.mjs';
+
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(SCRIPT_DIR, '..', '..');
 
@@ -131,33 +133,9 @@ function hookProtectConfig() {
 // ---------------------------------------------------------------------------
 
 function hookRtkFilter() {
-  const input = readStdin();
-  const probe = spawnSync(process.platform === 'win32' ? 'where' : 'which', ['rtk'], {
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  });
-
-  if (probe.status !== 0 || !probe.stdout) {
-    // rtk is not installed: pass the output through untouched.
-    process.stdout.write(input);
-    return 0;
-  }
-
-  try {
-    const filtered = spawnSync('rtk', ['filter'], {
-      input,
-      encoding: 'utf8',
-      timeout: 5000,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    if (filtered.status === 0 && filtered.stdout) {
-      process.stdout.write(filtered.stdout);
-      return 0;
-    }
-  } catch {
-    // fall through to passthrough
-  }
-  process.stdout.write(input);
+  // The filter lives in rtk-filter.mjs so this dispatcher, the POSIX and
+  // PowerShell twins and the OpenCode plugin all behave identically.
+  process.stdout.write(filterPayload(readStdin()));
   return 0;
 }
 
