@@ -1,68 +1,29 @@
 <#
 .SYNOPSIS
-    PostToolUse Output Compressor Hook for Windows PowerShell.
-    Filters command output using the `rtk` (Rust Token Killer) binary if available.
-    Gracefully echoes raw input unchanged if `rtk` is absent.
+    rtk Output Filter Hook for Windows PowerShell - thin wrapper.
+.DESCRIPTION
+    The filter itself lives in scripts/hooks/rtk-filter.mjs, which is the one
+    implementation shared by this script, its POSIX twin, the cross-platform
+    dispatcher and the OpenCode plugin. They cannot disagree about the payload
+    shape, the redaction rules or the runtime requirement.
+
+    A PostToolUse hook receives the agent's hook payload on stdin, which for
+    Claude Code, Codex, Goose and Qoder is a JSON envelope - not terminal text.
+    The implementation extracts the terminal text from that envelope before
+    handing it to rtk.
+
+    Graceful degradation: without Node, or without rtk, the input is emitted
+    unchanged. The filter never swallows output and never fails a session.
 #>
 
-[CmdletBinding()]
-param(
-    [Parameter(ValueFromPipeline = $true)]
-    [string]$InputText,
+$Filter = Join-Path $PSScriptRoot "rtk-filter.mjs"
 
-    [Parameter(Position = 0)]
-    [string]$RawOutput
-)
-
-begin {
-    $ErrorActionPreference = 'SilentlyContinue'
-    $PipelineItems = [System.Collections.Generic.List[string]]::new()
-}
-
-process {
-    if ($PSCmdlet.MyInvocation.ExpectingInput) {
-        if ($null -ne $InputText) {
-            $PipelineItems.Add($InputText)
-        }
-    } elseif (-not [string]::IsNullOrEmpty($InputText)) {
-        $PipelineItems.Add($InputText)
-    }
-}
-
-end {
-    # Accumulate input from argument, pipeline, or $Input fallback
-    $Content = ""
-    if (-not [string]::IsNullOrEmpty($RawOutput)) {
-        $Content = $RawOutput
-    } elseif ($PipelineItems.Count -gt 0) {
-        $Content = ($PipelineItems -join [Environment]::NewLine) + [Environment]::NewLine
-    } elseif ($Input) {
-        $Content = ($Input | Out-String)
-    }
-
-    if ([string]::IsNullOrEmpty($Content)) {
-        exit 0
-    }
-
-    # Check if rtk binary is installed and executable
-    $RtkCommand = Get-Command "rtk" -ErrorAction SilentlyContinue
-
-    if ($RtkCommand) {
-        try {
-            $Filtered = $Content | & $RtkCommand.Source filter 2>$null
-            if ($LASTEXITCODE -eq 0 -and $null -ne $Filtered) {
-                $FilteredText = if ($Filtered -is [array]) { ($Filtered -join [Environment]::NewLine) } else { [string]$Filtered }
-                if (-not [string]::IsNullOrEmpty($FilteredText)) {
-                    [Console]::Out.Write($FilteredText)
-                    exit 0
-                }
-            }
-        } catch {
-            # Fallback to raw output on any filter failure
-        }
-    }
-
-    # Graceful passthrough: echo raw input unchanged
-    [Console]::Out.Write($Content)
+$Node = Get-Command "node" -ErrorAction SilentlyContinue
+if (-not $Node -or -not (Test-Path -LiteralPath $Filter)) {
+    # No runtime: emit the payload unchanged.
+    $Input | Out-String | Write-Output
     exit 0
 }
+
+& $Node.Source $Filter
+exit 0

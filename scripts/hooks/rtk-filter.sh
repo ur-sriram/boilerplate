@@ -1,25 +1,38 @@
 #!/usr/bin/env sh
-# PostToolUse Output Compressor Hook for POSIX environments (Linux / macOS).
-# Filters terminal stdout via `rtk` if available, echoing raw input if absent.
+# ==============================================================================
+# rtk Output Filter Hook (POSIX / Linux / macOS) - thin wrapper.
+#
+# The filter itself lives in scripts/hooks/rtk-filter.mjs, which is the one
+# implementation shared by this script, its PowerShell twin, the cross-platform
+# dispatcher and the OpenCode plugin. They cannot disagree about the payload
+# shape, the redaction rules or the runtime requirement.
+#
+# WHY THE WRAPPER EXISTS
+# ----------------------
+# A PostToolUse hook receives the agent's hook payload on stdin, which for
+# Claude Code, Codex, Goose and Qoder is a JSON envelope - not terminal text.
+# The implementation extracts the terminal text from that envelope before
+# handing it to rtk; the previous revision piped the envelope itself into
+# rtk and echoed it back when rtk was missing.
+#
+# Graceful degradation: without Node, or without rtk, the input is emitted
+# unchanged. The filter never swallows output and never fails a session.
+# ==============================================================================
 
-if [ ! -t 0 ]; then
-    INPUT_CONTENT=$(cat)
-else
-    INPUT_CONTENT="$1"
-fi
+set -u
 
-if [ -z "$INPUT_CONTENT" ]; then
+HOOKS_DIR="$(cd "$(dirname "$0")" && pwd)"
+FILTER="${HOOKS_DIR}/rtk-filter.mjs"
+
+if ! command -v node >/dev/null 2>&1; then
+    # No runtime: emit the payload unchanged.
+    cat
     exit 0
 fi
 
-if command -v rtk >/dev/null 2>&1; then
-    FILTERED=$(printf '%s\n' "$INPUT_CONTENT" | rtk filter 2>/dev/null)
-    if [ $? -eq 0 ] && [ -n "$FILTERED" ]; then
-        printf '%s\n' "$FILTERED"
-        exit 0
-    fi
+if [ ! -f "${FILTER}" ]; then
+    cat
+    exit 0
 fi
 
-# Fallback: emit raw input unmodified
-printf '%s\n' "$INPUT_CONTENT"
-exit 0
+exec node "${FILTER}"

@@ -63,7 +63,7 @@ Every hook now calls the cross-platform Node dispatcher
 macOS and Linux:
 
 - `PreToolUse`: `protect-config` aborts any tool execution targeting paths outside the repository (exit code 1).
-- `PostToolUse`: `rtk-filter` compresses terminal output if `rtk` is available, otherwise passes it through untouched.
+- `PostToolUse`: `rtk-filter` compresses terminal output if `rtk` is available, otherwise passes it through untouched. The hook receives Codex's JSON payload, so the filter extracts the terminal text from it before handing it to `rtk`.
 - `SessionStart`: `session-start` prints the runtime readiness summary;
   `memory-sync` recalls the project's episodic memory (claude-mem).
 

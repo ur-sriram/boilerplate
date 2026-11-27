@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { compressWithRtk } from '../../scripts/hooks/rtk-filter.mjs';
 
 /**
  * OpenCode terminal output compressor.
@@ -6,6 +6,10 @@ import { spawnSync } from 'node:child_process';
  * Pipes terminal command output through the `rtk` (Rust Token Killer) binary
  * when available, reducing output tokens by 60-90%. If rtk is missing or
  * fails, the output passes through untouched.
+ *
+ * OpenCode is the one adapter whose hook can REPLACE the tool output, so this
+ * is the one place the saving is real: the compressed text becomes the
+ * result the model sees.
  *
  * WHY THE DEFAULT EXPORT LOOKS LIKE THIS
  * --------------------------------------
@@ -15,38 +19,15 @@ import { spawnSync } from 'node:child_process';
  * `server()` function. The previous revision exported a bare
  * `export const server = ...`, so OpenCode rejected the file with
  * "Path plugin ... must export id" and the compressor never ran.
+ *
+ * The compression itself is shared with the POSIX hook, the PowerShell hook
+ * and the cross-platform dispatcher, so the four cannot disagree about what
+ * counts as compressed output.
  */
-
-let rtkAvailable = null;
-
-/** Probe for the rtk binary once and remember the answer. */
-function hasRtk() {
-  if (rtkAvailable !== null) return rtkAvailable;
-
-  const probeCmd = process.platform === 'win32' ? 'where' : 'which';
-  const probe = spawnSync(probeCmd, ['rtk'], {
-    timeout: 1000,
-    encoding: 'utf-8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-  });
-
-  rtkAvailable = probe.status === 0 && Boolean(probe.stdout);
-  return rtkAvailable;
-}
 
 /** Run `rtk filter` over the text; returns null when it cannot be used. */
 function compress(text) {
-  if (!hasRtk()) return null;
-
-  const filter = spawnSync('rtk', ['filter'], {
-    input: text,
-    timeout: 5000,
-    encoding: 'utf-8',
-    stdio: ['pipe', 'pipe', 'pipe'],
-  });
-
-  if (filter.status !== 0 || !filter.stdout) return null;
-  return filter.stdout;
+  return compressWithRtk(text);
 }
 
 export default {

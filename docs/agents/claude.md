@@ -28,8 +28,12 @@ identically on Windows, macOS and Linux:
 - `protect-config` blocks any write whose resolved path falls outside the
   project root (exit code 1). It resolves both the root and the target
   physically, so a checkout behind a symlink still works.
-- `rtk-filter` pipes terminal output through `rtk` when installed and passes
-  it through untouched otherwise.
+- `rtk-filter` compresses terminal output through `rtk` when it is installed
+  and passes it through untouched otherwise. The hook receives Claude Code's
+  JSON payload, so the filter extracts the terminal text from it first
+  (`tool_response.stdout`) and emits the compressed text - the raw output
+  stays in the transcript either way, so the saving here is in the context the
+  hook adds, not in the transcript itself.
 - `session-start` prints the runtime readiness summary.
 - `memory-sync` recalls the project's episodic memory (claude-mem) so the
   session starts with the decisions recorded in previous ones.

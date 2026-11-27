@@ -4,6 +4,11 @@ import path from 'node:path';
 /**
  * OpenCode file-size guard.
  *
+ * It enforces THIS repository's 400-line rule (.agents/rules/code-quality.md).
+ * It has nothing to do with the vendored `ponytail` skills - the file was
+ * renamed from `ponytail-compactor.js`, which implied a capability it never
+ * had.
+ *
  * `.agents/rules/code-quality.md` caps every source file at 400 effective
  * lines (excluding blank lines and comment-only lines), matching the
  * `max-lines` ESLint rule. This plugin blocks writes that would push a file
@@ -86,7 +91,7 @@ function projectResultingContent(toolName, args, projectRoot) {
 }
 
 export default {
-  id: 'boilerplate-ponytail-compactor',
+  id: 'boilerplate-file-size-guard',
 
   /** OpenCode V1 hook surface. */
   async server({ directory } = {}) {
