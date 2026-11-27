@@ -77,7 +77,7 @@ Antigravity executes cross-platform lifecycle hooks defined in `.antigravity/hoo
 ```
 
 - **PreToolUse**: Validates target paths before write operations. Blocks any attempt to access or modify paths outside the repository.
-- **PostToolUse**: Pipes verbose terminal output through `rtk filter` to reduce token overhead, gracefully echoing raw logs if `rtk` is missing.
+- **PostToolUse**: Pipes verbose terminal output through `rtk filter` to reduce token overhead, gracefully echoing raw logs if `rtk` is missing. The shared filter (`scripts/hooks/rtk-filter.mjs`) extracts the terminal text from the hook payload first, so a JSON payload is never handed to `rtk`.
 - **SessionStart**: Audits local prerequisites (Git, Node, Python, PowerShell/Bash) and prints an environment status summary.
 - **MemorySync**: Recalls the project's episodic memory (claude-mem) so the session starts with previously recorded decisions.
 

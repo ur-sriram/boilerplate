@@ -85,8 +85,10 @@ Rather than declaring all MCP servers as always-on (which would incur ~1,050 tok
 In addition to static prompt budgeting, two runtime mechanisms reduce output tokens during execution:
 
 1. **`rtk` (Rust Token Killer)**:
-   - Hooks into the `PostToolUse` lifecycle event via `scripts/hooks/rtk-filter.{ps1,sh}` and `.opencode/plugins/rtk-interceptor.js`.
+   - Hooks into the `PostToolUse` lifecycle event via `scripts/hooks/rtk-filter.{ps1,sh}` and `.opencode/plugins/rtk-interceptor.js`. The filter itself lives in `scripts/hooks/rtk-filter.mjs`, so the POSIX hook, the PowerShell hook, the dispatcher and the OpenCode plugin cannot disagree about it.
    - Compresses verbose terminal output from build, test, and package manager commands (`npm test`, `cargo build`, `pytest`), achieving **60% to 90% token reduction**.
+   - A PostToolUse hook receives the agent's *payload*, not terminal text - for Claude Code, Codex, Goose and Qoder that is a JSON envelope. The filter extracts the terminal text from it (`tool_response.stdout`, `tool_output`, `output`, ...) before handing anything to `rtk`, and emits the compressed text.
+   - The 60-90% figure is the **OpenCode** figure: its plugin replaces the tool result, so the model reads the compressed text. The command-hook adapters can only add the compressed text to the context - the raw output stays in the transcript - so the saving there is smaller.
    - Features a guaranteed non-crashing fallback: if `rtk` is not installed, output passes through unmodified.
 
 2. **`headroom` Context Compressor**:

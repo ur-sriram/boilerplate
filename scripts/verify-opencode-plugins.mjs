@@ -34,7 +34,7 @@ const PLUGIN_DIR = path.join(ROOT, '.opencode', 'plugins');
 const REQUIRED_HOOKS = {
   'config-protection.js': 'tool.execute.before',
   'headroom-guard.js': 'tool.execute.before',
-  'ponytail-compactor.js': 'tool.execute.before',
+  'file-size-guard.js': 'tool.execute.before',
   'rtk-interceptor.js': 'tool.execute.after',
   'session-start.js': 'event',
   'memory-sync.js': 'event',
@@ -122,15 +122,15 @@ async function exercise(file, hooks) {
     );
   }
 
-  if (file === 'ponytail-compactor.js') {
+  if (file === 'file-size-guard.js') {
     const before = hooks['tool.execute.before'];
     const short = { args: { filePath: 'src/app/page.tsx', content: 'const a = 1;\n' } };
-    await expectNoThrow(() => before({ tool: 'write' }, short), 'ponytail-compactor: a small write must be allowed');
+    await expectNoThrow(() => before({ tool: 'write' }, short), 'file-size-guard: a small write must be allowed');
 
     const long = { args: { filePath: 'src/app/page.tsx', content: 'const a = 1;\n'.repeat(401) } };
     await expectThrow(
       () => before({ tool: 'write' }, long),
-      'ponytail-compactor: a write past 400 effective lines must be blocked',
+      'file-size-guard: a write past 400 effective lines must be blocked',
     );
   }
 

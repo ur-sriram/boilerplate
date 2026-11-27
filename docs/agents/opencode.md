@@ -76,13 +76,14 @@ OpenCode executes vanilla ECMAScript modules directly via Node.js without requir
    - Detects repository-wide grep / ripgrep commands via `tool.execute.before`.
    - **Advises, it does not block.** It prints a one-line reminder pointing at the Graphify MCP server. An earlier revision blocked these searches, which turned out to be wrong in both directions (it blocked single-file greps while allowing `grep -r .`). Blocking legitimate searches in an autonomous loop is worse than nudging.
 
-3. **Ponytail Compactor Plugin (`.opencode/plugins/ponytail-compactor.js`)**:
+3. **File-Size Guard Plugin (`.opencode/plugins/file-size-guard.js`)**:
    - Enforces the 400 effective-line ceiling from `.agents/rules/code-quality.md` at the moment of the edit.
    - Computes the size the file *would* have after the write, so a file that is already over the limit can still be repaired.
 
 4. **RTK Interceptor Plugin (`.opencode/plugins/rtk-interceptor.js`)**:
    - Intercepts tool results after execution via `tool.execute.after` and pipes them through `rtk`.
-   - If the `rtk` (Rust Token Killer) binary is installed in PATH, pipes output through `rtk filter` to compress verbose compiler or test logs by 60-90%.
+   - If the `rtk` (Rust Token Killer) binary is installed in PATH, pipes output through `rtk filter` to compress verbose compiler or test logs by 60-90%. The compression itself is shared with the POSIX hook, the PowerShell hook and the cross-platform dispatcher (`scripts/hooks/rtk-filter.mjs`).
+   - This is the adapter where the saving is real: the plugin replaces the tool result, so the model reads the compressed text rather than the raw output.
    - If `rtk` is not installed, passes the output through untouched. The binary is probed once and the result cached.
 
 5. **Session Start Plugin (`.opencode/plugins/session-start.js`)**:
@@ -145,7 +146,7 @@ logic so the two paths cannot drift.
 |---|---|---|
 | `config-protection.js` | `tool.execute.before` | Blocks writes outside the project root |
 | `headroom-guard.js` | `tool.execute.before` | Advises against whole-repository greps (enforces `.agents/rules/codebase-exploration.md`) |
-| `ponytail-compactor.js` | `tool.execute.before` | Blocks writes that would push a file past the 400-line ceiling |
+| `file-size-guard.js` | `tool.execute.before` | Blocks writes that would push a file past the 400-line ceiling |
 | `rtk-interceptor.js` | `tool.execute.after` | Compresses terminal output through `rtk` (60-90% saving, graceful passthrough) |
 | `session-start.js` | `event` | Prints the session readiness summary |
 | `memory-sync.js` | `event` | Recalls the project's episodic memory (claude-mem) |
