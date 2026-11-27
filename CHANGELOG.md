@@ -9,8 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Nothing yet.
+
+---
+
+## [1.1.0] — 2026-11-27
+
 ### Changed
 
+- **claude-mem now follows upstream's observation model.** The 9 observation
+  types and 7 concepts of the upstream `code` mode profile replace the
+  taxonomy the boilerplate's own prose had invented; `sensitive` episodes are
+  withheld from recall unless `--include-sensitive`; dedup has two tiers (an
+  identical title is merged, a near-duplicate is reported and **not** written);
+  ranking uses the IDF model with its term veto; retrieval is index-first
+  (`search` → `timeline` → `get`); and every episode is attributed to the
+  session that wrote it. The legacy spellings still map, so existing entries
+  keep reading. The LLM observer, automatic capture, SQLite/Chroma, the
+  25-tool MCP server, cloud sync and telemetry are deliberately not adopted,
+  and the reasons are documented.
 - **claude-mem is now a project-level vendored island.** The store, its CLI and
   the launcher moved from `src/features/claude-mem/` to `.repo/claude-mem/`, so
   `src/features/` stays free for the user's own features and every vendored
@@ -18,10 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [`.repo/README.md`](.repo/README.md).
 - **The episodic memory now has a write path.** `/remember` records an
   observation — a decision, a discovery, a change, a gotcha; `/recall`
-  searches the store.
-  Both are distributed to every adapter and enforced by
+  searches the store. Both are distributed to every adapter and enforced by
   `scripts/verify-adapters.py`. Previously the hook only read, so in a real
   session the store stayed empty.
+- **`.repo/` is the home for vendored third-party code**, with a README that
+  states what an island is and the rules one follows.
 - **`package.json` requires Node `>=22.18.0`** (it claimed `>=22.6.0`).
   The test suite, the claude-mem CLI and every hook that runs a `.ts` file
   need the type stripping that ships by default from that release;
@@ -44,6 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The slash-command count was still 8 in `scripts/sync-agent-adapters.sh`,
   `scripts/verify-adapters.py` and `docs/agents/copilot.md` after the two new
   commands landed.
+- `.agents/memory/session.json` is machine-local state like the episode
+  store, but it was not ignored — it would have been committed with a live
+  session id in it.
 
 ---
 
@@ -84,5 +105,6 @@ First public release of the boilerplate as a GitHub template.
 - MCP servers are started from project-local paths and are verified to boot.
 - `AGENTS.md` stays inside its token budget, so agent context stays small.
 
-[Unreleased]: https://github.com/ur-sriram/boilerplate/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/ur-sriram/boilerplate/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/ur-sriram/boilerplate/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/ur-sriram/boilerplate/releases/tag/v1.0.0
