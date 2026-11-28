@@ -296,6 +296,17 @@ def check_hooks(adapter: dict) -> list[str]:
         errors.append(
             f"{adapter['name']}: hooks still invoke PowerShell only — POSIX hosts get no guardrails"
         )
+
+    # The marker grep above only proves the hook NAME appears somewhere in the
+    # config. It never proves the script it points at exists, so a config
+    # wired to a deleted file still reported "OK". Resolve every referenced
+    # script path and check it on disk.
+    for referenced in sorted(set(re.findall(r"[\w./-]*scripts/hooks/[\w.-]+", blob))):
+        if referenced.endswith((".mjs", ".js", ".sh", ".ps1", ".py")):
+            if not (REPO_ROOT / referenced).exists():
+                errors.append(
+                    f"{adapter['name']}: hook script '{referenced}' does not exist"
+                )
     return errors
 
 
@@ -365,7 +376,11 @@ def main() -> int:
                 adapter["name"],
                 "OK" if not rule_err else "MISSING",
                 "OK" if not mcp_err else ("N/A" if not adapter.get("mcp") else "DRIFT"),
-                "OK" if not hook_err else ("N/A" if not adapter.get("hooks") else "MISSING"),
+                (
+                    "N/A"
+                    if not adapter.get("hooks")
+                    else ("OK" if not hook_err else "MISSING")
+                ),
                 "OK" if not cmd_err else "MISSING",
             )
         )

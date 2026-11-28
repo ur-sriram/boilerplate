@@ -295,7 +295,11 @@ def main() -> int:
     for result in results:
         if result is None:
             continue
-        if result.startswith("[FAIL]"):
+        # Anything that is not an explicit [OK] means the adapter was NOT
+        # updated — an unreadable file, or a file with no matching entries.
+        # Treating those as success made a profile switch silently skip an
+        # adapter while still printing "applied to all adapter configs".
+        if not result.startswith("[OK]"):
             failures.append(result)
         else:
             print(result)

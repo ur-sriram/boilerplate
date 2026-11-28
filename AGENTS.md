@@ -21,6 +21,7 @@ Whenever creating or modifying web interfaces, agents MUST follow this sequentia
 
 1. **Step 1: Component Sourcing (Zero-Scratch Mandate)**:
    - Search `ui-registry-mcp` (across 12 registries), `shadcn mcp` (`npx shadcn@latest mcp`), and Meta's `@astryxdesign/cli`.
+   - Install via the CLI's named-registry form: `npx shadcn@latest add @magicui/<item>` or `@astryx/component-<name>` (default registry: `add button`).
    - Adapt and install existing primitives. ONLY if not found across all three sources may custom components be built from scratch.
 2. **Step 2: Motion & Animation (`emilkowalski/skills`)**:
    - Apply spring physics (`stiffness: 300, damping: 30, mass: 1`), 60/120fps GPU-composited transforms (`transform`, `opacity`), and `prefers-reduced-motion` compliance.

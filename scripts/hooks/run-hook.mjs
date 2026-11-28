@@ -72,13 +72,21 @@ function extractTargetPath(payload) {
   }
   if (!data || typeof data !== 'object') return '';
 
-  const keys = ['path', 'file', 'target', 'target_path', 'filePath'];
+  const keys = ['path', 'file', 'target', 'target_path', 'filePath', 'file_path'];
   for (const key of keys) {
     if (typeof data[key] === 'string' && data[key].trim()) return data[key].trim();
   }
-  const params = data.params && typeof data.params === 'object' ? data.params : {};
-  for (const key of keys) {
-    if (typeof params[key] === 'string' && params[key].trim()) return params[key].trim();
+  // Claude Code (and Codex, Qoder, Goose, Antigravity) nest the target under
+  // `tool_input`; some adapters use `params`. Both must be checked, or the
+  // guardrail silently allows every out-of-scope write.
+  const containers = [data.tool_input, data.params, data.args, data.input];
+  for (const container of containers) {
+    if (!container || typeof container !== 'object') continue;
+    for (const key of keys) {
+      if (typeof container[key] === 'string' && container[key].trim()) {
+        return container[key].trim();
+      }
+    }
   }
   return '';
 }

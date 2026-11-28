@@ -58,7 +58,12 @@ MCP Profile Comparison:
 - **Installation/Execution**: `npx -y ui-registry-mcp@0.7.1`
 - **Type**: Local stdio
 - **Capabilities** (verified against the running server):
-  - `list_registries`: List available component registries (shadcn, magicui, aceternity, etc.).
+  - `list_registries`: List the component registries the server can pull from. The
+    twelve it serves are ReUI, Kokonut UI, Kibo UI, Tailark, SmoothUI, Cult UI,
+    useLayouts, Optics, Watermelon UI, beUI, AI Elements and Aceternity UI.
+    The **default shadcn registry and Magic UI are not served by this server** —
+    they are reached through the shadcn CLI (`npx shadcn@latest add @magicui/...`),
+    which is why `components.json` declares them as named registries.
   - `list_components`: List the components available in a registry.
   - `search_components`: Search components across 12 registries.
   - `get_component`: Retrieve component implementation code and CLI installation commands.

@@ -4,7 +4,7 @@
   "rsc": false,
   "tsx": true,
   "tailwind": {
-    "config": "tailwind.config.js",
+    "config": "",
     "css": "src/app/globals.css",
     "baseColor": "slate",
     "cssVariables": true,
@@ -18,8 +18,7 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "default": "https://ui.shadcn.com/r",
-    "astryx": "https://astryx.design/r",
-    "magicui": "https://magicui.design/r"
+    "@astryx": "https://astryx.atmeta.com/shadcn/{name}.json",
+    "@magicui": "https://magicui.design/r/{name}.json"
   }
 }

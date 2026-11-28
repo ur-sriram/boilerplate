@@ -18,7 +18,7 @@ Cursor reads project rules from `.cursor/rules/core.mdc`, MCP servers from
 The canonical invocations (kept identical to the root `.mcp.json`):
 
 ```json
-"graphify":     { "command": "uvx", "args": ["--from", "graphifyy", "graphify-mcp"] },
+"graphify":     { "command": "uvx", "args": ["--from", "graphifyy[mcp]", "graphify-mcp"] },
 "ui-registry":  { "command": "npx", "args": ["-y", "ui-registry-mcp@0.7.1"], "disabled": true },
 "headroom":     { "command": "uvx", "args": ["--from", "headroom-ai[mcp]", "headroom", "mcp", "serve"], "disabled": true }
 ```

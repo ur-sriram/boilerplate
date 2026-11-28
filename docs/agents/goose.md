@@ -32,7 +32,7 @@ extensions:
     cmd: uvx
     args:
       - "--from"
-      - "graphifyy"
+      - "graphifyy[mcp]"
       - "graphify-mcp"
     enabled: true
     type: stdio

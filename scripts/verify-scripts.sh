@@ -84,6 +84,51 @@ if [ -d "${HOOKS_DIR}" ]; then
             echo "[FAIL] protect-config.sh blocked in-scope target"
             TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
         fi
+
+        # A guardrail that is only ever tested on the ALLOW path is not tested.
+        # Claude Code, Codex, Qoder, Goose and Antigravity all send the target
+        # as `tool_input.file_path`; when the hook did not look there it found
+        # no path, treated the payload as read-only, and allowed the write.
+        OUT_OF_SCOPE='{"hook_event_name":"PreToolUse","tool_name":"Write","tool_input":{"file_path":"/etc/passwd","content":"x"}}'
+        if echo "${OUT_OF_SCOPE}" | bash "${PROTECT_HOOK}" >/dev/null 2>&1; then
+            echo "[FAIL] protect-config.sh allowed an out-of-scope tool_input.file_path"
+            TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+        else
+            echo "[PASS] protect-config.sh blocked an out-of-scope tool_input.file_path"
+        fi
+
+        # The payload used to be interpolated into a Python source literal, so
+        # three consecutive quotes broke the parse, the path was never
+        # extracted, and the write was allowed.
+        QUOTE_PAYLOAD='{"tool_name":"Write","tool_input":{"file_path":"/etc/passwd"},"content":"docstring '"'"''"'"''"'"' here"}'
+        if echo "${QUOTE_PAYLOAD}" | bash "${PROTECT_HOOK}" >/dev/null 2>&1; then
+            echo "[FAIL] protect-config.sh allowed an out-of-scope write with quotes in the payload"
+            TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+        else
+            echo "[PASS] protect-config.sh blocked an out-of-scope write with quotes in the payload"
+        fi
+    fi
+
+    # run-hook.mjs is the dispatcher that Claude Code, Codex, Goose and Qoder
+    # actually invoke. It was never executed by this suite, so a regression in
+    # it stayed invisible.
+    RUN_HOOK="${HOOKS_DIR}/run-hook.mjs"
+    if [ -f "${RUN_HOOK}" ] && command -v node >/dev/null 2>&1; then
+        if echo '{"tool_name":"Write","tool_input":{"file_path":"/etc/passwd"}}' | node "${RUN_HOOK}" protect-config >/dev/null 2>&1; then
+            echo "[FAIL] run-hook.mjs allowed an out-of-scope tool_input.file_path"
+            TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+        else
+            echo "[PASS] run-hook.mjs blocked an out-of-scope tool_input.file_path"
+        fi
+
+        if echo '{"tool_name":"Write","tool_input":{"file_path":"src/lib/verify-probe.ts"}}' | node "${RUN_HOOK}" protect-config >/dev/null 2>&1; then
+            echo "[PASS] run-hook.mjs permitted an in-scope tool_input.file_path"
+        else
+            echo "[FAIL] run-hook.mjs blocked an in-scope tool_input.file_path"
+            TOTAL_ERRORS=$((TOTAL_ERRORS + 1))
+        fi
+    else
+        echo "[WARN] run-hook.mjs or node not found; skipping dispatcher guardrail checks"
     fi
 
     # The rtk hook used to pipe the agent's JSON hook payload straight into
