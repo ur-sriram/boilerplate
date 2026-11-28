@@ -29,10 +29,18 @@ flowchart LR
 - **Rule**: DO NOT author UI components from scratch.
 - **Action**:
   1. Search for existing accessible component primitives and templates across:
-     - `ui-registry-mcp` (searches across 12 modern registries: ReUI, Kokonut UI, Kibo UI, Cult UI, Aceternity, etc.)
+     - `ui-registry-mcp` (searches across 12 modern registries: ReUI, Kokonut UI, Kibo UI, Cult UI, Aceternity, etc.). It is **off in the default profile** — start it with `./scripts/mcp-profile.sh ui`.
      - `shadcn mcp` (`npx shadcn@latest mcp`)
-     - Meta's `@astryxdesign/cli` (`astryx search <component>`)
-  2. If a matching component or block is found, install and adapt it into `components/ui/` or the local feature folder.
+     - Meta's `@astryxdesign/cli` (`npx @astryxdesign/cli search <component>`)
+  2. If a matching component or block is found, install and adapt it into `components/ui/` or the local feature folder:
+     - **Named registries.** `components.json` declares two, and the shadcn CLI addresses them in the `@namespace/name` form. The key MUST carry the `@` prefix and the URL MUST contain a `{name}` placeholder, or the CLI rejects the whole file.
+       ```bash
+       npx shadcn@latest add @magicui/marquee
+       npx shadcn@latest add @astryx/component-button
+       ```
+       The default shadcn registry needs no namespace: `npx shadcn@latest add button`.
+     - **Astryx item names are prefixed.** The registry at `https://astryx.atmeta.com/shadcn` publishes items as `component-<name>` (`component-button`, `component-badge`, …), not `button`. List them with `npx @astryxdesign/cli component --list`.
+     - **Astryx components are StyleX, not Tailwind.** Every Astryx item declares `@astryxdesign/core` and `@stylexjs/stylex` as dependencies and imports `@astryxdesign/core/reset.css` and `astryx.css`. It does not use this repository's Tailwind theme, so install it into its own folder (`components/astryx/`) and add its CSS imports — dropping it into `components/ui/` next to Tailwind components will not render.
   3. **Only if NOT found** across all three sources are you permitted to author a custom component from scratch.
 
 ### Step 2: High-Performance Motion & Animation (`emilkowalski/skills`)

@@ -22,15 +22,22 @@
     "mcp:core": "python3 scripts/mcp-profile.py core",
     "mcp:ui": "python3 scripts/mcp-profile.py ui",
     "mcp:compression": "python3 scripts/mcp-profile.py compression",
-    "mcp:all": "python3 scripts/mcp-profile.py all"
+    "mcp:all": "python3 scripts/mcp-profile.py all",
+    "css:build": "tailwindcss -i ./src/app/globals.css -o ./dist/globals.css --minify",
+    "ui:check": "python3 scripts/verify-ui-contracts.py",
+    "ui:check:live": "python3 scripts/verify-ui-contracts.py --network"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.11",
     "eslint": "^10.15.0",
     "globals": "^16.4.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.3.5",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.74.0"
+    "typescript-eslint": "^8.74.0",
+    "@tailwindcss/postcss": "^4.3.5",
+    "@tailwindcss/cli": "^4.3.5"
   },
   "dependencies": {
     "clsx": "^2.1.1",

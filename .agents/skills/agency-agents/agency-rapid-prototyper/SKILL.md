@@ -71,7 +71,11 @@ You are **Rapid Prototyper**, a specialist in ultra-fast proof-of-concept develo
     "prisma": "^5.0.0",
     "@supabase/supabase-js": "^2.0.0",
     "@clerk/nextjs": "^4.0.0",
-    "shadcn-ui": "latest",
+    "shadcn": "latest",
+    // NOTE: shadcn/ui has no runtime package. Components are copied into
+    // your repo by the CLI: `npx shadcn@latest add button input textarea`.
+    // Do NOT depend on the npm package "shadcn-ui" — it is a squatted,
+    // abandoned 0.9.5 artifact, not the real library.
     "@hookform/resolvers": "^3.0.0",
     "react-hook-form": "^7.0.0",
     "zustand": "^4.0.0",
@@ -135,6 +139,11 @@ model Feedback {
 ### Rapid UI Development with shadcn/ui
 ```tsx
 // Rapid form creation with react-hook-form + shadcn/ui
+//
+// The `@/components/ui/*` imports below are NOT a package — shadcn/ui copies
+// component source into your repo. Install them first:
+//   npx shadcn@latest add button input textarea
+// (and `npx shadcn@latest add @magicui/<item>` for the named registries.)
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';

@@ -19,29 +19,45 @@ TARGET_PATH="$1"
 if [ -z "$TARGET_PATH" ] && [ ! -t 0 ]; then
     INPUT_PAYLOAD=$(cat)
     # Extract path from JSON if python3 is available.
+    # The payload is piped on STDIN, never interpolated into the Python
+    # source: a Write payload carries the file CONTENT, so an apostrophe in
+    # it used to break the parse and turn a legitimate in-project write into
+    # a false block.
+    #
     # NOTE: the key set must match the PowerShell twin exactly:
-    #       path | file | target | target_path | filePath | params.*
+    #       path | file | target | target_path | filePath | file_path
+    #       and the tool_input | params | args | input containers.
     if command -v python3 >/dev/null 2>&1; then
-        TARGET_PATH=$(python3 -c "
+        TARGET_PATH=$(printf '%s' "$INPUT_PAYLOAD" | python3 -c "
 import sys, json
+
+KEYS = ('path', 'file', 'target', 'target_path', 'filePath', 'file_path')
+CONTAINERS = ('tool_input', 'params', 'args', 'input')
+
+
+def first_string(container):
+    for key in KEYS:
+        value = container.get(key)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
 try:
-    data = json.loads('''$INPUT_PAYLOAD''')
+    data = json.load(sys.stdin)
     if not isinstance(data, dict):
         raise ValueError
-    params = data.get('params') or {}
-    if not isinstance(params, dict):
-        params = {}
-    for key in ('path', 'file', 'target', 'target_path', 'filePath'):
-        value = data.get(key)
-        if value:
-            print(value)
-            break
-    else:
-        for key in ('path', 'file', 'target', 'target_path', 'filePath'):
-            value = params.get(key)
-            if value:
-                print(value)
+    found = first_string(data)
+    if found is None:
+        for name in CONTAINERS:
+            container = data.get(name)
+            if not isinstance(container, dict):
+                continue
+            found = first_string(container)
+            if found is not None:
                 break
+    if found is not None:
+        print(found)
 except Exception:
     pass
 " 2>/dev/null || true)

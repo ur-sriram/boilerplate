@@ -18,7 +18,7 @@ skills_directory = ".codex/skills"
 
 [mcp_servers.graphify]
 command = "uvx"
-args = ["--from", "graphifyy", "graphify-mcp"]
+args = ["--from", "graphifyy[mcp]", "graphify-mcp"]
 
 [[hooks.PreToolUse]]
 matcher = "Write|Edit|MultiEdit"

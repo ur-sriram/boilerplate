@@ -117,7 +117,10 @@ class McpClient:
             pass
 
     def stderr_tail(self, limit: int = 600) -> str:
-        return "".join(self.stderr).strip()[-limit:]
+        text = "".join(self.stderr).strip()
+        if not text:
+            return ""
+        return "\n    --- server stderr ---\n    " + text[-limit:].replace("\n", "\n    ")
 
 
 def probe(server: str, argv: list[str], timeout: int) -> tuple[bool, list[str], str]:
@@ -145,22 +148,29 @@ def probe(server: str, argv: list[str], timeout: int) -> tuple[bool, list[str], 
 
         response = client.await_response(1, deadline)
         if response is None:
-            return False, [], f"no initialize response within {timeout}s"
+            # The whole point of this script is to diagnose dead servers, so
+            # surface what the server printed instead of only the timeout.
+            detail = client.stderr_tail()
+            return False, [], f"no initialize response within {timeout}s{detail}"
         if "error" in response:
-            return False, [], f"initialize error: {json.dumps(response['error'])[:200]}"
+            detail = client.stderr_tail()
+            return False, [], f"initialize error: {json.dumps(response['error'])[:200]}{detail}"
 
         client.send({"jsonrpc": "2.0", "method": "notifications/initialized"})
         client.send({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})
 
         tools_response = client.await_response(2, time.time() + timeout)
         if tools_response is None:
-            return False, [], f"no tools/list response within {timeout}s"
+            detail = client.stderr_tail()
+            return False, [], f"no tools/list response within {timeout}s{detail}"
         if "error" in tools_response:
-            return False, [], f"tools/list error: {json.dumps(tools_response['error'])[:200]}"
+            detail = client.stderr_tail()
+            return False, [], f"tools/list error: {json.dumps(tools_response['error'])[:200]}{detail}"
 
         tools = [tool.get("name", "?") for tool in tools_response.get("result", {}).get("tools", [])]
         if not tools:
-            return False, [], "server started but exposed no tools"
+            detail = client.stderr_tail()
+            return False, [], f"server started but exposed no tools{detail}"
         return True, tools, ""
     finally:
         client.stop()

@@ -102,6 +102,33 @@ else
     echo "[WARN] Node not found; skipping the OpenCode plugin contract check"
 fi
 
+# 11. UI integration contracts.
+#     components.json, the theme stylesheet and the tsconfig aliases are the
+#     contract the shadcn CLI, the ui-registry MCP server and Astryx all
+#     depend on. They were never checked, which is how a registry block that
+#     the CLI rejects outright, a stylesheet with no CSS variables and a
+#     missing '@/*' alias could all sit in the repository looking healthy.
+if [ -n "${PYTHON_CMD:-${PYTHON_BIN:-}}" ]; then
+    PY_EXEC="${PYTHON_CMD:-${PYTHON_BIN}}"
+    run_suite "11. ui-contracts" "'${PY_EXEC}' '${SCRIPT_DIR}/verify-ui-contracts.py'"
+else
+    echo "[WARN] Python not found; skipping the UI contract check"
+fi
+
+# 12. MCP smoke test (opt-in).
+#     A configured server is not a working server — one entry sat in all nine
+#     configs for months while crashing on startup. This suite boots every
+#     server and lists its tools. It downloads packages on the first run, so
+#     it is opt-in: MCP_VERIFY=1 ./scripts/verify-all.sh
+if [ "${MCP_VERIFY:-0}" = "1" ] && [ -n "${PYTHON_CMD:-${PYTHON_BIN:-}}" ]; then
+    PY_EXEC="${PYTHON_CMD:-${PYTHON_BIN}}"
+    run_suite "12. mcp-servers" "'${PY_EXEC}' '${SCRIPT_DIR}/verify-mcp-servers.py'"
+elif [ "${MCP_VERIFY:-0}" = "1" ]; then
+    echo "[WARN] Python not found; skipping the MCP smoke test"
+else
+    echo "[INFO] MCP smoke test skipped (set MCP_VERIFY=1 to boot every MCP server)"
+fi
+
 echo ""
 echo "============================================================"
 echo "               VERIFICATION SUITE SUMMARY                   "

@@ -102,13 +102,20 @@ if [ -d "${CANONICAL_COMMANDS}" ]; then
                     .cline/commands .windsurf/commands .codex/prompts; do
             target_dir="${ROOT_DIR}/${dest}"
             [ "$VERIFY_ONLY" -eq 0 ] && mkdir -p "$target_dir"
-            printf '%s\n' "$cmd_body" > "${target_dir}/${cmd_name}.md"
+            # Verify mode must not write: it rewrote ~50 tracked files even
+            # with --verify-only, which destroyed the very state it claimed to
+            # be checking.
+            if [ "$VERIFY_ONLY" -eq 0 ]; then
+                printf '%s\n' "$cmd_body" > "${target_dir}/${cmd_name}.md"
+            fi
         done
 
         # GitHub Copilot prompt files must use the .prompt.md extension.
         copilot_dir="${ROOT_DIR}/.github/prompts"
         [ "$VERIFY_ONLY" -eq 0 ] && mkdir -p "$copilot_dir"
-        printf '%s\n' "$cmd_body" > "${copilot_dir}/${cmd_name}.prompt.md"
+        if [ "$VERIFY_ONLY" -eq 0 ]; then
+            printf '%s\n' "$cmd_body" > "${copilot_dir}/${cmd_name}.prompt.md"
+        fi
     done
 fi
 

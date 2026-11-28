@@ -74,22 +74,35 @@ if (-not [string]::IsNullOrWhiteSpace($InputPayload)) {
         if ($parsed) {
             if (-not $TargetPath) {
                 # Key set MUST match the POSIX twin (protect-config.sh) exactly:
-                #   path | file | target | target_path | filePath | params.*
+                #   path | file | target | target_path | filePath | file_path
+                #   and the tool_input | params | args | input containers.
+                #
                 # Missing 'target_path' here is what caused the Claude Code hook
                 # payload to fall through to the raw-blob branch and block
                 # legitimate in-scope writes.
-                foreach ($key in @('path', 'file', 'target', 'target_path', 'filePath')) {
+                #
+                # Missing 'file_path' + 'tool_input' is the mirror-image bug:
+                # Claude Code, Codex, Qoder, Goose and Antigravity all nest the
+                # target under `tool_input.file_path`, so the guardrail found no
+                # path, treated the payload as read-only, and ALLOWED the write.
+                $keys = @('path', 'file', 'target', 'target_path', 'filePath', 'file_path')
+                foreach ($key in $keys) {
                     if ($parsed.PSObject.Properties[$key] -and $parsed.$key) {
                         $TargetPath = $parsed.$key
                         break
                     }
                 }
-                if (-not $TargetPath -and $parsed.params) {
-                    foreach ($key in @('path', 'file', 'target', 'target_path', 'filePath')) {
-                        if ($parsed.params.PSObject.Properties[$key] -and $parsed.params.$key) {
-                            $TargetPath = $parsed.params.$key
-                            break
+                if (-not $TargetPath) {
+                    foreach ($containerName in @('tool_input', 'params', 'args', 'input')) {
+                        $container = $parsed.PSObject.Properties[$containerName]
+                        if (-not $container -or -not $container.Value) { continue }
+                        foreach ($key in $keys) {
+                            if ($container.Value.PSObject.Properties[$key] -and $container.Value.$key) {
+                                $TargetPath = $container.Value.$key
+                                break
+                            }
                         }
+                        if ($TargetPath) { break }
                     }
                 }
             }

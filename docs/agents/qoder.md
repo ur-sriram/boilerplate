@@ -22,7 +22,7 @@ Qoder reads local project settings from `.qoder/settings.json`. All operational 
       "command": "uvx",
       "args": [
         "--from",
-        "graphifyy",
+        "graphifyy[mcp]",
         "graphify-mcp"
       ]
     }

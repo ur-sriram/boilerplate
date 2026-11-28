@@ -53,8 +53,23 @@ EXTERNAL_SCHEMES = (
 )
 
 
-def is_excluded_path(path: Path) -> bool:
-    for part in path.parts:
+def is_excluded_path(path: Path, project_root: Path | None = None) -> bool:
+    """True when the path sits inside an excluded directory.
+
+    The components are matched RELATIVE to the project root. Matching the
+    absolute path components meant that a checkout living under /tmp or
+    /temp had every file excluded: the suite reported "Scanning 0 Markdown
+    files ... 100% of links resolved successfully" — a vacuous pass that
+    looks exactly like a green run.
+    """
+    if project_root is not None:
+        try:
+            parts = path.relative_to(project_root).parts
+        except ValueError:
+            parts = path.parts
+    else:
+        parts = path.parts
+    for part in parts:
         if part in EXCLUDED_DIRS or part.startswith("boilerplate_smoke_"):
             return True
     return False
@@ -201,7 +216,7 @@ def validate_markdown_links(project_root: Path) -> list:
         for f in files:
             if f.endswith(".md") or f.endswith(".markdown"):
                 md_path = Path(root) / f
-                if not is_excluded_path(md_path):
+                if not is_excluded_path(md_path, project_root):
                     md_files.append(md_path)
 
     print(f"[INFO] Scanning {len(md_files)} Markdown files across {project_root}...")
